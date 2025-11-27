@@ -5,15 +5,23 @@ from agents.striker.striker import StrikerAgent
 from agents.midfielder.midfielder import midfielder_rules
 from agents.defender.defender import defender_rules
 from agents.goalkeeper.goalkeeper import goalkeeper_rules
+from core.physics import resolve_player_collisions
+
+DRIBBLE_OFFSET = 0.8
+CONTROL_RADIUS = 1.2
+RELEASE_RADIUS = 1.8
+ACCEL_FACTOR = 6.0
+MAX_SPEED = 6.0
+SUBSTEPS = 2
 
 class Simulator:
     def __init__(self, agents, players, ball, field, recorder, fps=1):
-        self.agents = agents #store logical agent isntances
-        self.players = players #store player state data (list of dicts wiht, x, y, role, team)
-        self.ball = ball #physics object for ball
-        self.ball_controller = None #controller for ball physics
-        self.field = field #field geometry and goal logic
-        self.recorder = recorder #recorder for logging events
+        self.agents = agents
+        self.players = players
+        self.ball = ball
+        self.ball_controller = None          # store index or None
+        self.field = field
+        self.recorder = recorder
         self.last_goal = None
         self.out_of_bounds = False
         self.offside = False
@@ -25,43 +33,122 @@ class Simulator:
     def reset(self):
         self.last_goal = None
         self.out_of_bounds = False
-        for player in self.players:
-            player.reset()
-        self.ball.reset()
+        self.ball_controller = None
+        for p in self.players:
+            # players are dict; ensure basic fields reset if needed
+            p['vx'] = 0.0
+            p['vy'] = 0.0
+        if hasattr(self.ball, 'reset'):
+            self.ball.reset()
+        else:
+            self.ball.x = self.field.width / 2
+            self.ball.y = self.field.height / 2
+            self.ball.vx = 0.0
+            self.ball.vy = 0.0
 
     def snapshot(self):
         return {
             'players': [dict(p) for p in self.players],
-            'ball': (self.ball.x, self.ball.y),
-            'ball_controller': dict(self.ball_controller) if isinstance(self.ball_controller, dict) else None,
+            'ball': {'x': self.ball.x, 'y': self.ball.y, 'vx': getattr(self.ball, 'vx', 0.0), 'vy': getattr(self.ball, 'vy', 0.0)},
+            'ball_pos': (self.ball.x, self.ball.y),
+            'ball_controller': self.ball_controller,
             'last_goal': self.last_goal,
             'out_of_bounds': self.out_of_bounds,
             'step': self.step_count
         }
 
-    def step(self, dt=1.0):
-        self.step_count += 1
-        # auto assign ball controller if none
-        if self.ball_controller is None and self.players:
-            closest = min(self.players, key=lambda p: math.hypot(self.ball.x - p['x'], self.ball.y - p['y']))
-            if math.hypot(self.ball.x - closest['x'], self.ball.y - closest['y']) <= getattr(self.ball, 'control_radius', 2.0):
-                self.ball_controller = closest
+    def step(self, dt: float):
+        sub_dt = dt / SUBSTEPS
+        for _ in range(SUBSTEPS):
+            self._agents_decide(sub_dt)
+            self._update_player_motion(sub_dt)
+            self._update_ball(sub_dt)
+            self._handle_possession()
+            self._post_ball_update()
+        self._record_snapshot()
 
-        for agent, player in zip(self.agents, self.players):
-            state = self.get_observation(agent, player)
-            action = agent.decide_action(state, self.ball_controller)
-            self.apply_action(player, action, dt)
+    def _agents_decide(self, dt):
+        for p, agent in zip(self.players, self.agents):
+            # jika agent punya desired_velocity gunakan itu
+            if hasattr(agent, 'desired_velocity'):
+                tvx, tvy = agent.desired_velocity(p, self.ball, self.field)
+            else:
+                # fallback: gunakan target (tx, ty) atau kejar bola
+                if 'tx' in p and 'ty' in p:
+                    dx = p['tx'] - p['x']
+                    dy = p['ty'] - p['y']
+                else:
+                    dx = self.ball.x - p['x']
+                    dy = self.ball.y - p['y']
+                dist = (dx*dx + dy*dy) ** 0.5
+                desired_speed = p.get('speed', MAX_SPEED)
+                if dist > 1e-4:
+                    tvx = dx / dist * desired_speed
+                    tvy = dy / dist * desired_speed
+                else:
+                    tvx = 0.0
+                    tvy = 0.0
+            # smoothing
+            p['vx'] += (tvx - p['vx']) * ACCEL_FACTOR * dt
+            p['vy'] += (tvy - p['vy']) * ACCEL_FACTOR * dt
 
-        if hasattr(self.ball, 'update'):
-            self.ball.update(dt=dt, field=self.field)
+    def _update_player_motion(self, dt):
+        for p in self.players:
+            p['x'] += p['vx'] * dt
+            p['y'] += p['vy'] * dt
+        resolve_player_collisions(self.players)
+        self._clamp_players()
 
-        goal = self.field.is_goal(self.ball.x, self.ball.y)
-        if goal:
-            self.last_goal = goal
+    def _update_ball(self, dt):
+        if self.ball_controller is not None:
+            pc = self.players[self.ball_controller]
+            speed = (pc['vx']**2 + pc['vy']**2)**0.5
+            if speed > 0.01:
+                nx = pc['vx'] / speed
+                ny = pc['vy'] / speed
+            else:
+                nx, ny = 1.0, 0.0
+            self.ball.x = pc['x'] + nx * DRIBBLE_OFFSET
+            self.ball.y = pc['y'] + ny * DRIBBLE_OFFSET
+            self.ball.vx = pc['vx']
+            self.ball.vy = pc['vy']
+        else:
+            self.ball.x += getattr(self.ball, 'vx', 0.0) * dt
+            self.ball.y += getattr(self.ball, 'vy', 0.0) * dt
+            if hasattr(self.ball, 'vx'):
+                self.ball.vx *= 0.985
+                self.ball.vy *= 0.985
 
-        if hasattr(self.field, 'in_bounds') and hasattr(self.ball, 'radius'):
-            if not self.field.in_bounds(self.ball.x, self.ball.y, radius=self.ball.radius):
-                self.out_of_bounds = True
+    def _handle_possession(self):
+        if self.ball_controller is not None:
+            pc = self.players[self.ball_controller]
+            dx = self.ball.x - pc['x']
+            dy = self.ball.y - pc['y']
+            if dx*dx + dy*dy > RELEASE_RADIUS*RELEASE_RADIUS:
+                self.ball_controller = None
+        if self.ball_controller is None:
+            min_idx = None
+            min_d2 = CONTROL_RADIUS * CONTROL_RADIUS
+            for i, p in enumerate(self.players):
+                dx = self.ball.x - p['x']
+                dy = self.ball.y - p['y']
+                d2 = dx*dx + dy*dy
+                if d2 < min_d2 and (getattr(self.ball, 'vx', 0.0)**2 + getattr(self.ball, 'vy', 0.0)**2) < 9.0:
+                    min_idx = i
+                    min_d2 = d2
+            if min_idx is not None:
+                self.ball_controller = min_idx
+
+    def _post_ball_update(self):
+        if self.ball.x < 0: self.ball.x = 0
+        if self.ball.x > self.field.width: self.ball.x = self.field.width
+        if self.ball.y < 0: self.ball.y = 0
+        if self.ball.y > self.field.height: self.ball.y = self.field.height
+
+    def _clamp_players(self):
+        for p in self.players:
+            p['x'] = max(0, min(self.field.width, p['x']))
+            p['y'] = max(0, min(self.field.height, p['y']))
 
     def apply_action(self, player, action, dt):
         if not isinstance(action, dict):
@@ -69,71 +156,43 @@ class Simulator:
         t = action.get('type')
         if t == 'move':
             tx, ty = action.get('target', (player['x'], player['y']))
-            speed = float(action.get('speed', 5.0))
-            dx, dy = tx - player['x'], ty - player['y']
-            dist = math.hypot(dx, dy)
-            if dist > 1e-6:
-                step = min(speed * dt, dist)
-                player['x'] += dx / dist * step
-                player['y'] += dy / dist * step
-            player['x'] = max(0, min(self.field.width, player['x']))
-            player['y'] = max(0, min(self.field.height, player['y']))
+            speed = float(action.get('speed', MAX_SPEED))
+            player['tx'] = tx
+            player['ty'] = ty
+            player['speed'] = speed
         elif t == 'control':
-            dist = math.hypot(self.ball.x - player['x'], self.ball.y - player['y'])
-            if dist <= getattr(self.ball, 'control_radius', 2.0):
-                self.ball_controller = player
-        elif t == 'pass':
-            if self.ball_controller is player and hasattr(self.ball, 'kick_towards'):
-                tx, ty = action.get('target', (player['x'], player['y']))
-                power = float(action.get('power', 10.0))
-                self.ball.kick_towards(tx, ty, power)
+            # kontrol bola akan di-handle _handle_possession via radius
+            pass
+        elif t in ('pass', 'shoot'):
+            idx = self.players.index(player)
+            if self.ball_controller == idx and hasattr(self.ball, 'kick_towards'):
+                if t == 'pass':
+                    tx, ty = action.get('target', (player['x'], player['y']))
+                    power = float(action.get('power', 10.0))
+                    self.ball.kick_towards(tx, ty, power)
+                else:
+                    if hasattr(self.field, 'get_opponent_goal_center'):
+                        gx, gy = self.field.get_opponent_goal_center(player['team'])
+                    else:
+                        gx, gy = self.field.width, self.field.height / 2
+                    power = float(action.get('power', 12.0))
+                    self.ball.kick_towards(gx, gy, power)
                 self.ball_controller = None
-        elif t == 'shoot':
-            if self.ball_controller is player and hasattr(self.field, 'get_opponent_goal_center') and hasattr(self.ball, 'kick_towards'):
-                gx, gy = self.field.get_opponent_goal_center(player['team'])
-                power = float(action.get('power', 12.0))
-                self.ball.kick_towards(gx, gy, power)
-                self.ball_controller = None
-        # else noop
+        # clamp stays
+        player['x'] = max(0, min(self.field.width, player['x']))
+        player['y'] = max(0, min(self.field.height, player['y']))
 
-    def get_observation(self, agent, player):
-        # adapt to actual agent API
-        if hasattr(agent, 'get_state'):
-            return agent.get_state(player, self.players, self.ball, self.field)
-        return agent.get_observation(player, self.players, self.ball, self.field)
+    def _record_snapshot(self):
+        snap = self.snapshot()
+        # fleksibel terhadap API recorder
+        if hasattr(self.recorder, 'add'):
+            self.recorder.add(snap)
+        elif hasattr(self.recorder, 'record'):
+            self.recorder.record(snap)
+        elif hasattr(self.recorder, 'append'):
+            self.recorder.append(snap)
 
-    def get_observation_by_name(self, agent_name):
-        for player in self.players:
-            if player.name == agent_name:
-                return self.get_observation(player)
-        return None
-
-    def apply_action_by_name(self, agent_name, action, dt=1.0):
-        for player in self.players:
-            if player.name == agent_name:
-                self.apply_action(player, action, dt)
-                break
-
-    def get_reward(self, agent_name):
-        for player in self.players:
-            if player.name == agent_name:
-                if self.last_goal:
-                    if (self.last_goal == "right" and player.side == "left") or \
-                            (self.last_goal == "left" and player.side == "right"):
-                        return 1.0
-                return 0.0
-        return 0.0
-
-    def check_terminated(self):
-        return self.last_goal is not None
-
-    def render(self):
-        self.field.render(self.players, self.ball)
-
-    def close(self):
-        pass
-
-
+    # tetap (reward dll) ...
 def computer_striker_reward(simulator, striker, old_state, new_state, action):
     """
     Compute reward safely even if old_state is None.

@@ -186,7 +186,15 @@ class PygameRenderer:
             self.screen.blit(text_surf, text_rect)
 
         # Draw ball
-        bx, by = state["ball"]
+        ball_obj = state.get("ball", {})
+        if isinstance(ball_obj, dict):
+            bx = ball_obj.get("x", 0.0)
+            by = ball_obj.get("y", 0.0)
+            bvx = ball_obj.get("vx", 0.0) if isinstance(ball_obj, dict) else 0.0
+            bvy = ball_obj.get("vy", 0.0) if isinstance(ball_obj, dict) else 0.0
+        else:
+            # fallback jika masih tuple/list
+            bx, by = ball_obj
         ball_x = int((bx + self.outer_margin) * self.scale)
         ball_y = int((by + self.outer_margin) * self.scale)
         pygame.draw.circle(self.screen, (255, 255, 0), (ball_x, ball_y), int(0.3 * self.scale))

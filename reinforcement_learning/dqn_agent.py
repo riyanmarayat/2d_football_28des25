@@ -32,7 +32,9 @@ class DQNCoreAgent:
     ):
         self.state_size = state_size
         self.action_size = action_size
-        self.seed = random.seed(seed)
+        self.seed = seed
+        random.seed(seed)
+
         self.gamma = gamma
         self.tau = tau
         self.batch_size = batch_size
@@ -49,9 +51,10 @@ class DQNCoreAgent:
 
     def step(self, state, action, reward, next_state, done):
         self.memory.add(state, action, reward, next_state, done)
-        self.t_step = (self.t_step + 1) % self.update_every
-        if self.t_step == 0 and len(self.memory) >= self.batch_size:
+        if len(self.memory) >= self.batch_size:
             experiences = self.memory.sample()
+            if experiences is None:
+                return
             self.learn(experiences)
 
     def act(self, state, eps: float = 0.1):
@@ -88,35 +91,41 @@ class DQNCoreAgent:
             t_param.data.copy_(self.tau * l_param.data + (1.0 - self.tau) * t_param.data)
 
 
+Experience = namedtuple("Experience", ("state", "action", "reward", "next_state", "done"))
+
 class ReplayBuffer:
     def __init__(self, buffer_size, batch_size, seed, device):
         self.memory = deque(maxlen=buffer_size)
         self.batch_size = batch_size
-        self.seed = random.seed(seed)
         self.device = device
-        self.experience = namedtuple(
-            "Experience",
-            field_names=["state", "action", "reward", "next_state", "done"],
-        )
+        random.seed(int(seed))
 
     def add(self, state, action, reward, next_state, done):
-        e = self.experience(
+        if action is None:
+            return
+        exp = Experience(
             np.array(state, dtype=np.float32),
             np.array([action], dtype=np.int64),
             np.array([reward], dtype=np.float32),
             np.array(next_state, dtype=np.float32),
-            np.array([done], dtype=np.uint8),
+            np.array([done], dtype=np.float32)
         )
-        self.memory.append(e)
+        self.memory.append(exp)
 
     def sample(self):
-        batch = random.sample(self.memory, self.batch_size)
-        states = torch.from_numpy(np.vstack([b.state for b in batch])).float().to(self.device)
-        actions = torch.from_numpy(np.vstack([b.action for b in batch])).long().to(self.device)
-        rewards = torch.from_numpy(np.vstack([b.reward for b in batch])).float().to(self.device)
-        next_states = torch.from_numpy(np.vstack([b.next_state for b in batch])).float().to(self.device)
-        dones = torch.from_numpy(np.vstack([b.done for b in batch])).float().to(self.device)
-        return states, actions, rewards, next_states, dones
+        if len(self.memory) < self.batch_size:
+            return None
+        batch = random.sample(self.memory, k=self.batch_size)
+        states = torch.from_numpy(np.vstack([e.state for e in batch])).float().to(self.device)
+        actions = torch.from_numpy(np.vstack([e.action for e in batch])).long().to(self.device)
+        rewards = torch.from_numpy(np.vstack([e.reward for e in batch])).float().to(self.device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in batch])).float().to(self.device)
+        dones = torch.from_numpy(np.vstack([e.done for e in batch])).float().to(self.device)
+        return (states, actions, rewards, next_states, dones)
 
     def __len__(self):
         return len(self.memory)
+
+
+# Alias agar import DQNAgent tetap bekerja
+DQNAgent = DQNCoreAgent

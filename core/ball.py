@@ -74,6 +74,23 @@ class Ball:
         self.vx = round(power * math.cos(rad), 2)
         self.vy = round(power * math.sin(rad), 2)
 
+    def kick_towards(self, tx, ty, power):
+        dx = tx - self.x
+        dy = ty - self.y
+        dist = (dx*dx + dy*dy) ** 0.5
+        if dist < 1e-6:
+            return
+        nx = dx / dist
+        ny = dy / dist
+        self.vx = nx * power
+        self.vy = ny * power
+
     def get_position(self):
         """Get the current position of the ball"""
         return (round(self.x, 2), round(self.y, 2))
+
+    def reset(self):
+        self.x = self.field_width / 2
+        self.y = self.field_height / 2
+        self.vx = 0.0
+        self.vy = 0.0

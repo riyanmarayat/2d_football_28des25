@@ -14,7 +14,7 @@ from agents.striker.dqn_striker import DQNStriker
 FPS = 15
 DURATION_STEPS = 1000
 
-qpa0_striker = DQNStriker(team="A", seed=0)
+qpa0_striker = DQNStriker(team="A", seed=0) #seed only none is uses
 players = []
 #TEAM A (LEFT)
 initial_positions_A = [
@@ -42,7 +42,7 @@ initial_positions_A = [
     # ('A', 'Striker', (45, 37.5))
 ]
 for team, role, (x, y) in initial_positions_A:
-    players.append({'team': team, 'role':role, 'x': x, 'y': y})
+    players.append({'team': team, 'role':role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
 #TEAM B (RIGHT)
 initial_positions_B = [
     # ('B', 'Goalkeeper', (95, 37.5)),
@@ -69,7 +69,7 @@ initial_positions_B = [
     ('B', 'Striker', (55, 30))
 ]
 for team, role, (x, y) in initial_positions_B:
-    players.append({'team': team, 'role':role, 'x': x, 'y': y})
+    players.append({'team': team, 'role':role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
 
 ball = Ball(field_width=100, field_height=75)
 field = Field(width=100, height=75)
@@ -81,6 +81,9 @@ exporter = VideoExporter("simulation.mp4", fps=FPS)
 agents = []
 player_count = 0
 for p in players:
+    p['tx'] = p['x']
+    p['ty'] = p['y']
+    p['speed'] = 0.0
     if player_count == 0:
         agents.append(qpa0_striker)
         player_count += 1
@@ -120,37 +123,37 @@ for p in players:
         raise ValueError(f"Unknown role: {role}")
 #build sim
 simulator = Simulator(agents, players, ball, field, recorder, fps=FPS)
-old_state = None
+old_state = simulator.snapshot()
 total_reward = 0
-# total_episode = 0
-#main loop
-current_time = 0.0
 for step in range(DURATION_STEPS):
     dt = 1.0 / FPS
-    if step == 500:
-        pass
-    simulator.step(dt=dt) #update logic and physuics
-    # learning
-    new_state = qpa0_striker.get_state(players[0], players, ball, field)
 
-    action_dict = (qpa0_striker.action_index_to_dict(qpa0_striker.last_action_idx)
-                   if hasattr(qpa0_striker, 'last_action_idx') else {'type': 'noop'})
+    # pilih aksi DQN dari snapshot lama
+    action_idx = qpa0_striker.select_action(old_state)
+    action_dict = qpa0_striker.action_index_to_dict(action_idx)
+    simulator.apply_action(players[0], action_dict, dt)
 
+    simulator.step(dt=dt)
+
+    new_state = simulator.snapshot()
     reward = computer_striker_reward(simulator, qpa0_striker, old_state, new_state, action_dict)
     done = bool(simulator.last_goal or simulator.out_of_bounds)
-    qpa0_striker.learn(reward, new_state, done)
-    print(f"Step {step+1}/{DURATION_STEPS} reward: {reward} || {action_dict} || {simulator.ball_controller}")
+
+    if qpa0_striker.last_action_idx is not None:
+        qpa0_striker.learn(reward, new_state, done)
+
+    print(f"Step {step+1}/{DURATION_STEPS} reward: {reward} || {action_dict} || controller={simulator.ball_controller}")
     total_reward += reward
     old_state = new_state
+
+    frame = renderer.render(new_state)
+    exporter.add_frame(frame)
 
     if done:
         break
 
-    frame = renderer.render(simulator.snapshot())
-    exporter.add_frame(frame)
-
 #finalize
 exporter.export()
 renderer.quit()
-print("Simulation save to simulation.mp4")
+print(f"Simulation save to {exporter.path}")
 print(f"Episode reward: {total_reward}")
