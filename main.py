@@ -157,6 +157,8 @@ for ep in range(NUM_EPISODES):
 
     old_state = simulator.snapshot()
     total_rewards = [0.0 for _ in agents]
+    log_path = f"episode_{ep+1}_log.txt"
+    log_lines = []
 
     # Initialize last_state for each agent
     for ag in agents:
@@ -183,7 +185,20 @@ for ep in range(NUM_EPISODES):
                 agent.learn(reward, new_state, done)
             total_rewards[i] += reward
 
-        print(f"[Ep {ep+1}] Step {step+1}/{DURATION_STEPS} reward_p0: {total_rewards[0]:.3f} pos=({players[0]['x']:.2f},{players[0]['y']:.2f})")
+        # log aksi dan state ringkas
+        action_log = []
+        for i, act in enumerate(actions):
+            action_log.append(f"p{i}:{act}")
+        state_log = []
+        for i, pl in enumerate(players):
+            state_log.append(f"p{i}({pl['team']}{pl.get('side','')},{pl['role']}):({pl['x']:.2f},{pl['y']:.2f}) v=({pl.get('vx',0):.2f},{pl.get('vy',0):.2f})")
+
+        line = (f"[Ep {ep+1}] Step {step+1}/{DURATION_STEPS} r0:{total_rewards[0]:.3f} "
+                f"actions: {'; '.join(action_log)} | state: {'; '.join(state_log)}")
+        log_lines.append(line)
+        # terminal ringkas: reward dan pos pemain pertama
+        print(f"[Ep {ep+1}] Step {step+1}/{DURATION_STEPS} r0:{total_rewards[0]:.3f} "
+              f"p0=({players[0]['x']:.2f},{players[0]['y']:.2f}) p1=({players[1]['x']:.2f},{players[1]['y']:.2f})")
         old_state = new_state
 
         frame = renderer.render(new_state)
@@ -196,6 +211,10 @@ for ep in range(NUM_EPISODES):
     renderer.quit()
     print(f"Episode {ep+1} saved to {exporter.path}")
     print(f"Episode rewards (sum): {total_rewards}")
+    # simpan log
+    with open(log_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(log_lines))
+    print(f"Episode log saved to {log_path}")
 
     # Save checkpoints per team
     save_team_checkpoint(team_left, agents)

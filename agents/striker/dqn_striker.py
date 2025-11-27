@@ -165,17 +165,17 @@ class DQNStriker:
         vx, vy = self._last_action_vel
         role = str(player.get("role", "")).lower()
         # goal center ditentukan oleh side (left menyerang kanan)
-        if self.side == "left":
-            gx, gy = field.width, field.height / 2
-        else:
-            gx, gy = 0.0, field.height / 2
+        own_gx = 0.0 if self.side == "left" else field.width
+        gx, gy = own_gx, field.height / 2
         if role == "goalkeeper":
-            dx, dy = gx - player["x"], gy - player["y"]
+            # tetap di sekitar gawang sendiri (sedikit keluar max 20% lapangan)
+            target_x = own_gx + (field.width * 0.1 if self.side == "left" else -field.width * 0.1)
+            dx, dy = target_x - player["x"], gy - player["y"]
             d = math.hypot(dx, dy) + 1e-6
-            return (dx / d) * 4.0, (dy / d) * 4.0
+            return (dx / d) * 3.5, (dy / d) * 3.5
         if "center back" in role:
             # jaga zona defensif
-            target_x = field.width * (0.25 if player.get("team", "A").upper() == "A" else 0.75)
+            target_x = field.width * 0.25 if self.side == "left" else field.width * 0.75
             dx, dy = target_x - player["x"], (ball.y - player["y"])
             d = math.hypot(dx, dy) + 1e-6
             return (dx / d) * 5.0, (dy / d) * 5.0
@@ -184,7 +184,10 @@ class DQNStriker:
         if bc is not None and bc != self.player_index and player.get("team", "").upper() == ("A" if self.team == "A" else "B"):
             offset = 8.0 if (self.player_index % 2 == 0) else -8.0
             target_y = max(0.0, min(field.height, ball.y + offset))
-            target_x = min(field.width * 0.65, ball.x + 6.0) if self.team == "A" else max(field.width * 0.35, ball.x - 6.0)
+            if self.side == "left":
+                target_x = min(field.width * 0.65, ball.x + 6.0)
+            else:
+                target_x = max(field.width * 0.35, ball.x - 6.0)
             dx, dy = target_x - player["x"], target_y - player["y"]
             d = math.hypot(dx, dy) + 1e-6
             return (dx / d) * 5.5, (dy / d) * 5.5
