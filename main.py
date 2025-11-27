@@ -11,65 +11,67 @@ from agents.roles import (RightWingerAgent, LeftWingerAgent, AttackingMidfielder
                           CenterBackAgent, GoalkeeperAgent)
 from agents.striker.striker import StrikerAgent
 from agents.striker.dqn_striker import DQNStriker
+
 FPS = 15
 DURATION_STEPS = 1000
 
-qpa0_striker = DQNStriker(team="A", seed=0) #seed only none is uses
+# Inisialisasi DQN Striker
+qpa0_striker = DQNStriker(team="A", seed=0)  # gunakan seed untuk reproducible
+
+# Fallback jika apply_action tidak menggerakkan pemain
+def apply_action_compat(simulator, player, action, dt):
+    vx = float(action.get("move_vx", 0.0))
+    vy = float(action.get("move_vy", 0.0))
+    player["vx"] = vx
+    player["vy"] = vy
+    player["x"] += vx * dt
+    player["y"] += vy * dt
+    # clamp dalam lapangan
+    fw = simulator.field.width
+    fh = simulator.field.height
+    player["x"] = max(0.0, min(fw, player["x"]))
+    player["y"] = max(0.0, min(fh, player["y"]))
+    # proses tendangan jika power > 0 dan pemain pengontrol bola
+    kp = float(action.get("kick_power", 0.0))
+    kdir = action.get("kick_dir", None)
+    if kp > 0.0 and kdir is not None:
+        controller = simulator.ball_controller
+        is_self = False
+        if isinstance(controller, int):
+            is_self = (controller == 0)
+        elif isinstance(controller, dict):
+            is_self = (controller.get("index", None) == 0)
+        else:
+            dx = simulator.ball.x - player["x"]
+            dy = simulator.ball.y - player["y"]
+            is_self = (dx*dx + dy*dy) <= 1.0
+        if is_self:
+            dx, dy = float(kdir[0]), float(kdir[1])
+            mag = (dx*dx + dy*dy) ** 0.5
+            if mag > 1e-6:
+                dx /= mag; dy /= mag
+            ball_speed = 25.0 * max(0.0, min(1.0, kp))
+            simulator.ball.vx = dx * ball_speed
+            simulator.ball.vy = dy * ball_speed
+
 players = []
-#TEAM A (LEFT)
+# TEAM A (LEFT)
 initial_positions_A = [
-    # ('A', 'Goalkeeper', (5, 37.5)),
-    # ('A', 'Right Fullback', (15, 60)),
-    # ('A', 'Left Fullback', (15, 15)),
-    # ('A', 'Center Back', (15, 30)),
-    # ('A', 'Center Back', (15, 45)),
-    # ('A', 'Defensive Midfielder', (25, 30)),
-    # ('A', 'Defensive Midfielder', (25, 45)),
-    # ('A', 'Attacking Midfielder', (35, 37.5)),
-    # ('A', 'Right Winger', (35, 60)),
-    # ('A', 'Left Winger', (35, 15)),
-    # ('A', 'Striker', (45, 37.5))
     ('A', 'Striker', (5, 37.5)),
     ('A', 'Striker', (15, 60)),
     ('A', 'Striker', (15, 15)),
-    # ('A', 'Striker', (15, 30)),
-    # ('A', 'Striker', (15, 45)),
-    # ('A', 'Striker', (25, 30)),
-    # ('A', 'Striker', (25, 45)),
-    # ('A', 'Striker', (35, 37.5)),
-    # ('A', 'Striker', (35, 60)),
-    # ('A', 'Striker', (35, 15)),
-    # ('A', 'Striker', (45, 37.5))
 ]
 for team, role, (x, y) in initial_positions_A:
-    players.append({'team': team, 'role':role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
-#TEAM B (RIGHT)
+    players.append({'team': team, 'role': role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
+
+# TEAM B (RIGHT)
 initial_positions_B = [
-    # ('B', 'Goalkeeper', (95, 37.5)),
-    # ('B', 'Center Back', (85, 50)),
-    # ('B', 'Center Back', (85, 37.5)),
-    # ('B', 'Center Back', (85, 25)),
-    # ('B', 'Right Wingback', (75, 15)),
-    # ('B', 'Left Wingback', (75, 60)),
-    # ('B', 'Right Midfielder', (70, 20)),
-    # ('B', 'Left Midfielder', (70, 55)),
-    # ('B', 'Central Midfielder', (70, 37.5)),
-    # ('B', 'Striker', (55, 45)),
-    # ('B', 'Striker', (55, 30))
-    # ('B', 'Striker', (95, 37.5)),
-    # ('B', 'Striker', (85, 50)),
-    # ('B', 'Striker', (85, 37.5)),
-    # ('B', 'Striker', (85, 25)),
-    # ('B', 'Striker', (75, 15)),
-    # ('B', 'Striker', (75, 60)),
-    # ('B', 'Striker', (70, 20)),
-    # ('B', 'Striker', (70, 55)),
     ('B', 'Striker', (70, 37.5)),
     ('B', 'Striker', (55, 45)),
     ('B', 'Striker', (55, 30))
 ]
 for team, role, (x, y) in initial_positions_B:
-    players.append({'team': team, 'role':role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
+    players.append({'team': team, 'role': role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
 
 ball = Ball(field_width=100, field_height=75)
 field = Field(width=100, height=75)
@@ -77,7 +79,7 @@ recorder = Recorder()
 renderer = PygameRenderer(width=100, height=75, scale=10, show_horizontal_zones=False, show_vertical_zones=False)
 exporter = VideoExporter("simulation.mp4", fps=FPS)
 
-#map each player dict to its agent instanc
+# Map each player dict to its agent instance
 agents = []
 player_count = 0
 for p in players:
@@ -85,13 +87,14 @@ for p in players:
     p['ty'] = p['y']
     p['speed'] = 0.0
     if player_count == 0:
+        # Player[0] dikontrol oleh DQNStriker
         agents.append(qpa0_striker)
         player_count += 1
         continue
     player_count += 1
     team = p['team'].upper()
     role = p['role'].lower()
-    if role ==  'goalkeeper':
+    if role == 'goalkeeper':
         agents.append(GoalkeeperAgent(team=team))
     elif role == 'center back':
         agents.append(CenterBackAgent(team=team))
@@ -121,28 +124,49 @@ for p in players:
         agents.append(StrikerAgent(team=team))
     else:
         raise ValueError(f"Unknown role: {role}")
-#build sim
+
+# Build simulator
 simulator = Simulator(agents, players, ball, field, recorder, fps=FPS)
+
 old_state = simulator.snapshot()
 total_reward = 0
+
+# Initialize last_state for DQN (extract once from snapshot)
+_ = qpa0_striker.extract_features(old_state)
+
 for step in range(DURATION_STEPS):
     dt = 1.0 / FPS
 
-    # pilih aksi DQN dari snapshot lama
+    # Pilih aksi DQN dari snapshot lama (state diekstraksi internal)
     action_idx = qpa0_striker.select_action(old_state)
     action_dict = qpa0_striker.action_index_to_dict(action_idx)
+
+    # Terapkan aksi ke player[0]
+    pre_x, pre_y = players[0]["x"], players[0]["y"]
+    pre_vx, pre_vy = players[0].get("vx", 0.0), players[0].get("vy", 0.0)
     simulator.apply_action(players[0], action_dict, dt)
 
+    # Jika tidak ada perubahan setelah apply_action, gunakan fallback
+    no_move = (
+        players[0]["x"] == pre_x and players[0]["y"] == pre_y and
+        players[0].get("vx", 0.0) == pre_vx and players[0].get("vy", 0.0) == pre_vy
+    )
+    if no_move:
+        apply_action_compat(simulator, players[0], action_dict, dt)
+
+    # Step simulator
     simulator.step(dt=dt)
 
+    # Snapshot baru
     new_state = simulator.snapshot()
     reward = computer_striker_reward(simulator, qpa0_striker, old_state, new_state, action_dict)
     done = bool(simulator.last_goal or simulator.out_of_bounds)
 
+    # Learn
     if qpa0_striker.last_action_idx is not None:
         qpa0_striker.learn(reward, new_state, done)
 
-    print(f"Step {step+1}/{DURATION_STEPS} reward: {reward} || {action_dict} || controller={simulator.ball_controller}")
+    print(f"Step {step+1}/{DURATION_STEPS} reward: {reward} || {action_dict} || pos=({players[0]['x']:.2f},{players[0]['y']:.2f})")
     total_reward += reward
     old_state = new_state
 
@@ -152,7 +176,7 @@ for step in range(DURATION_STEPS):
     if done:
         break
 
-#finalize
+# finalize
 exporter.export()
 renderer.quit()
 print(f"Simulation save to {exporter.path}")
