@@ -35,6 +35,9 @@ class ReplayBuffer:
         self.buffer = deque(maxlen=capacity)
 
     def push(self, state, action, reward, next_state, done):
+        # reset buffer jika dimensi state berubah (misal setelah update fitur)
+        if len(self.buffer) > 0 and len(state) != len(self.buffer[0][0]):
+            self.buffer.clear()
         self.buffer.append((np.array(state, dtype=np.float32),
                             int(action),
                             float(reward),
@@ -66,7 +69,7 @@ class DQNStriker:
         team: str = "A",
         seed: Optional[int] = 42,
         player_index: int = 0,
-        state_dim: int = 61,
+        state_dim: int = 58,
         n_actions: int = ACTION_COUNT,
         gamma: float = 0.99,
         lr: float = 1e-3,
@@ -296,34 +299,46 @@ class DQNStriker:
 
         opp_team = "B" if self.team == "A" else "A"
         nearest_opp = (0.0, 0.0, 1e9)
-        opp_count_r8 = 0
-        opp_count_r16 = 0
+        opp_count_r10 = 0
+        mean_opp_x = 0.0
+        mean_opp_y = 0.0
+        opp_total = 0
         for p in players:
             if p.get("team", "").upper() != opp_team:
                 continue
             px, py = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
             dx, dy = px - sx, py - sy
             d = math.sqrt(dx * dx + dy * dy)
+            opp_total += 1
+            mean_opp_x += dx
+            mean_opp_y += dy
             if d < nearest_opp[2]:
                 nearest_opp = (dx, dy, d)
-            if d < 8.0:
-                opp_count_r8 += 1
-            if d < 16.0:
-                opp_count_r16 += 1
-
+            if d < 10.0:
+                opp_count_r10 += 1
+        if opp_total > 0:
+            mean_opp_x /= opp_total
+            mean_opp_y /= opp_total
         nearest_opp_dx = norm(nearest_opp[0], field_w)
         nearest_opp_dy = norm(nearest_opp[1], field_h)
         nearest_opp_dist = norm(nearest_opp[2], diag)
-        max_opp = max(1, sum(1 for p in players if p.get("team", "").upper() == opp_team))
-        opp_count_r8_norm = opp_count_r8 / max_opp
-        opp_count_r16_norm = opp_count_r16 / max_opp
+        max_opp = max(1, opp_total)
+        opp_count_r10_norm = opp_count_r10 / max_opp
+        mean_opp_x_rel = norm(mean_opp_x, field_w)
+        mean_opp_y_rel = norm(mean_opp_y, field_h)
 
         best_tm = None
         best_score = -1e9
+        tm_total = 0
+        mean_tm_x = 0.0
+        mean_tm_y = 0.0
         for i, p in enumerate(players):
             if i == idx or p.get("team", "").upper() != self.team:
                 continue
+            tm_total += 1
             px, py = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+            mean_tm_x += px - sx
+            mean_tm_y += py - sy
             dx, dy = px - sx, py - sy
             dist = math.sqrt(dx * dx + dy * dy)
             min_opp_d = 1e9
@@ -337,26 +352,25 @@ class DQNStriker:
             if score > best_score:
                 best_score = score
                 best_tm = (dx, dy, dist, min_opp_d, px, py)
+        if tm_total > 0:
+            mean_tm_x /= tm_total
+            mean_tm_y /= tm_total
 
         if best_tm is None:
             best_tm_dx = best_tm_dy = best_tm_dist = 0.0
-            best_tm_is_open = 0.0
             best_tm_world = None
         else:
             best_tm_dx = norm(best_tm[0], field_w)
             best_tm_dy = norm(best_tm[1], field_h)
             best_tm_dist = norm(best_tm[2], diag)
-            best_tm_is_open = 1.0 if best_tm[3] > 5.0 else 0.0
             bt_xw = best_tm[4] if self.team == "A" else field_w - best_tm[4]
             bt_yw = best_tm[5]
             best_tm_world = (bt_xw, bt_yw)
 
         tm_ahead = 0
-        tm_total = 0
         for i, p in enumerate(players):
             if p.get("team", "").upper() != self.team or i == idx:
                 continue
-            tm_total += 1
             px, _ = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
             if px > sx:
                 tm_ahead += 1
@@ -377,52 +391,37 @@ class DQNStriker:
                 min_d = min(min_d, d)
             return min_d > radius
 
-        pass_lane_open = 1.0 if best_tm and line_clear(sx + best_tm[0], sy + best_tm[1], radius=1.5) else 0.0
+        support_lane_open = 1.0 if line_clear(sx + 8.0, sy, radius=2.0) else 0.0
         shooting_window_open = 1.0 if line_clear(field_w, field_h / 2, radius=2.5) else 0.0
-        dribble_lane_open = 1.0 if line_clear(bx, by, radius=1.5) else 0.0
+        off_ball_run_viable = 1.0 if (sx < field_w * 0.75 and line_clear(field_w, sy, radius=2.0)) else 0.0
 
-        def lane_y_one_hot(y_norm):
-            bounds = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-            idx_lane = 4
-            for i in range(len(bounds) - 1):
-                if bounds[i] <= y_norm < bounds[i + 1]:
-                    idx_lane = i
-                    break
-            return [1.0 if idx_lane == i else 0.0 for i in range(5)]
+        zone_def = 1.0 if sx < field_w / 3 else 0.0
+        zone_mid = 1.0 if field_w / 3 <= sx < 2 * field_w / 3 else 0.0
+        zone_att = 1.0 if sx >= 2 * field_w / 3 else 0.0
 
-        def thirds_x_one_hot(x_norm):
-            bounds = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]
-            idx_third = 2
-            for i in range(len(bounds) - 1):
-                if bounds[i] <= x_norm < bounds[i + 1]:
-                    idx_third = i
-                    break
-            return [1.0 if idx_third == i else 0.0 for i in range(3)]
-
-        lane_y = lane_y_one_hot(norm(sy, field_h))
-        thirds_x = thirds_x_one_hot(norm(sx, field_w))
-
-        out_of_bounds = 1.0 if snapshot.get("out_of_bounds", False) else 0.0
-        time_frac = min(1.0, step / max_steps)
+        pressing_intensity = opp_count_r10_norm
 
         feat = np.array([
-            norm(sx, field_w), norm(sy, field_h),
+            norm(sx_raw, field_w), norm(sy_raw, field_h),
+            norm(sx_raw, field_w), norm(sy_raw, field_h),  # field ratio (redundan)
             norm(ball_dx, field_w), norm(ball_dy, field_h),
             norm(bvx, max_ball_speed), norm(bvy, max_ball_speed),
             norm(ball_dist, diag), angle_ball_sin, angle_ball_cos,
             norm(goal_dx, field_w), norm(goal_dy, field_h),
             norm(goal_dist, diag), angle_goal_sin, angle_goal_cos,
-            bc_none, bc_me, bc_tm, bc_op,
+            bc_me, bc_tm, bc_op,
             nearest_opp_dx, nearest_opp_dy, nearest_opp_dist,
-            opp_count_r8_norm, opp_count_r16_norm,
-            best_tm_dx, best_tm_dy, best_tm_dist, best_tm_is_open,
+            opp_count_r10_norm,
+            mean_opp_x_rel, mean_opp_y_rel,
+            best_tm_dx, best_tm_dy, best_tm_dist,
+            norm(mean_tm_x, field_w), norm(mean_tm_y, field_h),
             teammate_count_ahead_norm,
-            pass_lane_open, shooting_window_open, dribble_lane_open,
-            *lane_y,
-            *thirds_x,
-            out_of_bounds,
+            support_lane_open,
+            zone_def, zone_mid, zone_att,
+            pressing_intensity,
+            shooting_window_open,
+            off_ball_run_viable,
             *self._last_action_one_hot.tolist(),
-            time_frac
         ], dtype=np.float32)
 
         self.last_state = feat
