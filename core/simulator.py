@@ -30,25 +30,18 @@ class Simulator:
         self.ball.reset()
 
     def snapshot(self):
-        # Return a lightweight immutable view of the current simulation state
         return {
-            'players': [dict(p) for p in self.players],  # shallow copy of player dicts
-            'ball': (self.ball.x, self.ball.y),  # renderer expects a (x, y) tuple
-            'field': {
-                'width': self.field.width,
-                'height': self.field.height,
-            },
+            'players': [dict(p) for p in self.players],
+            'ball': (self.ball.x, self.ball.y),
             'ball_controller': dict(self.ball_controller) if isinstance(self.ball_controller, dict) else None,
             'last_goal': self.last_goal,
             'out_of_bounds': self.out_of_bounds,
-            'offside': self.offside,
-            'step': self.step_count,
+            'step': self.step_count
         }
 
     def step(self, dt=1.0):
         self.step_count += 1
-
-        # inisialisasi pengontrol bola jika None: pilih pemain terdekat
+        # auto assign ball controller if none
         if self.ball_controller is None and self.players:
             closest = min(self.players, key=lambda p: math.hypot(self.ball.x - p['x'], self.ball.y - p['y']))
             if math.hypot(self.ball.x - closest['x'], self.ball.y - closest['y']) <= getattr(self.ball, 'control_radius', 2.0):
@@ -59,7 +52,6 @@ class Simulator:
             action = agent.decide_action(state, self.ball_controller)
             self.apply_action(player, action, dt)
 
-        # update bola (friksi/gerak)
         if hasattr(self.ball, 'update'):
             self.ball.update(dt=dt, field=self.field)
 
@@ -67,61 +59,48 @@ class Simulator:
         if goal:
             self.last_goal = goal
 
-        # bounds check sederhana
         if hasattr(self.field, 'in_bounds') and hasattr(self.ball, 'radius'):
             if not self.field.in_bounds(self.ball.x, self.ball.y, radius=self.ball.radius):
                 self.out_of_bounds = True
 
     def apply_action(self, player, action, dt):
-        # action contoh: {'type': 'move', 'target': (tx, ty), 'speed': 5.0}
         if not isinstance(action, dict):
             return
-        atype = action.get('type')
-        if atype == 'move':
+        t = action.get('type')
+        if t == 'move':
             tx, ty = action.get('target', (player['x'], player['y']))
             speed = float(action.get('speed', 5.0))
-            dx = tx - player['x']
-            dy = ty - player['y']
+            dx, dy = tx - player['x'], ty - player['y']
             dist = math.hypot(dx, dy)
             if dist > 1e-6:
-                ux, uy = dx / dist, dy / dist
-                step = speed * dt
-                if step >= dist:
-                    player['x'], player['y'] = tx, ty
-                else:
-                    player['x'] += ux * step
-                    player['y'] += uy * step
-            # clamp ke ukuran lapangan
+                step = min(speed * dt, dist)
+                player['x'] += dx / dist * step
+                player['y'] += dy / dist * step
             player['x'] = max(0, min(self.field.width, player['x']))
             player['y'] = max(0, min(self.field.height, player['y']))
-        elif atype == 'control':
-            # ambil kontrol bola jika dekat
+        elif t == 'control':
             dist = math.hypot(self.ball.x - player['x'], self.ball.y - player['y'])
             if dist <= getattr(self.ball, 'control_radius', 2.0):
                 self.ball_controller = player
-        elif atype == 'pass':
-            # {'type':'pass', 'target':(tx,ty), 'power':10.0}
+        elif t == 'pass':
             if self.ball_controller is player and hasattr(self.ball, 'kick_towards'):
                 tx, ty = action.get('target', (player['x'], player['y']))
                 power = float(action.get('power', 10.0))
                 self.ball.kick_towards(tx, ty, power)
                 self.ball_controller = None
-        elif atype == 'shoot':
-            # {'type':'shoot', 'power':12.0}
+        elif t == 'shoot':
             if self.ball_controller is player and hasattr(self.field, 'get_opponent_goal_center') and hasattr(self.ball, 'kick_towards'):
                 gx, gy = self.field.get_opponent_goal_center(player['team'])
                 power = float(action.get('power', 12.0))
                 self.ball.kick_towards(gx, gy, power)
                 self.ball_controller = None
-        else:
-            # no-op / aksi tidak dikenal
-            pass
+        # else noop
 
     def get_observation(self, agent, player):
-        # use whichever your agent implements
-        return agent.get_state(player, self.players, self.ball, self.field)
-        # or:
-        # return agent.get_observation(player, self.players, self.ball, self.field)
+        # adapt to actual agent API
+        if hasattr(agent, 'get_state'):
+            return agent.get_state(player, self.players, self.ball, self.field)
+        return agent.get_observation(player, self.players, self.ball, self.field)
 
     def get_observation_by_name(self, agent_name):
         for player in self.players:
@@ -156,20 +135,30 @@ class Simulator:
 
 
 def computer_striker_reward(simulator, striker, old_state, new_state, action):
-    # +1 for scoting (detect from simulator.last_goal)
-    # +0.1 for a successfull pass (you'd need to check if bball.x moved toward teammate)
-    # -0.5 if striker lost ball (old_state.has_ball and not new_state.has_ball
+    """
+    Compute reward safely even if old_state is None.
+    Expected new_state format can be adjusted; here we rely on simulator and action only.
+    """
     r = 0.0
-    if getattr(simulator, 'last_goal', None) == ('right' if striker.team.upper() == "A" else 'left'):
-        r += 1.0
-    if action['type'] == 'control':
-        #crude control check: ball is now closer to player than old_state
-        #implement your own logic here
-        r += 0.01
-    if action['type'] == 'pass':
-        #crude pass-succes check: ball is now closer to target than old_state
-        #implement your own logic here
+    # goal reward
+    if simulator.last_goal:
+        # if team A scores when attacking right goal
+        scored_side = simulator.last_goal  # 'left' or 'right'
+        # assume team A attacks right, team B attacks left
+        if striker.team.upper() == 'A' and scored_side == 'right':
+            r += 1.0
+        elif striker.team.upper() == 'B' and scored_side == 'left':
+            r += 1.0
+    # ball control reward
+    if action.get('type') == 'control':
+        r += 0.05
+    # pass reward (simple)
+    if action.get('type') == 'pass':
         r += 0.1
-    if old_state['ball_controller'] == 'me' and new_state['ball_controller'] != 'opponent':
-        r -= 0.5
+    # maintain possession (needs old_state present)
+    if old_state is not None and isinstance(old_state, dict):
+        if old_state.get('ball_controller') == 'me' and new_state.get('ball_controller') == 'me':
+            r += 0.02
+        if old_state.get('ball_controller') == 'me' and new_state.get('ball_controller') not in ('me', None):
+            r -= 0.3  # lost possession
     return r

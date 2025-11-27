@@ -10,11 +10,11 @@ from agents.roles import (RightWingerAgent, LeftWingerAgent, AttackingMidfielder
                           LeftWingbackAgent, DefensiveMidfielderAgent, RightFullbackAgent, LeftFullbackAgent,
                           CenterBackAgent, GoalkeeperAgent)
 from agents.striker.striker import StrikerAgent
-from agents.striker.qlearning_striker import QLearningStriker
+from agents.striker.dqn_striker import DQNStriker
 FPS = 15
 DURATION_STEPS = 1000
 
-qpa0_striker = QLearningStriker(team="A")
+qpa0_striker = DQNStriker(team="A", seed=0)
 players = []
 #TEAM A (LEFT)
 initial_positions_A = [
@@ -132,39 +132,22 @@ for step in range(DURATION_STEPS):
     simulator.step(dt=dt) #update logic and physuics
     # learning
     new_state = qpa0_striker.get_state(players[0], players, ball, field)
-    if old_state is None:
-        old_state = new_state
-    # compute reward and update Q-Table
-    reward = computer_striker_reward(simulator, qpa0_striker, old_state, new_state, qpa0_striker.last_action_dict)
-    print(f"Step {step+1}/{DURATION_STEPS} reward: {reward} || {qpa0_striker.last_action_dict} || {qpa0_striker.ball_controller}")
-    qpa0_striker.learn(reward, new_state)
+
+    action_dict = (qpa0_striker.action_index_to_dict(qpa0_striker.last_action_idx)
+                   if hasattr(qpa0_striker, 'last_action_idx') else {'type': 'noop'})
+
+    reward = computer_striker_reward(simulator, qpa0_striker, old_state, new_state, action_dict)
+    done = bool(simulator.last_goal or simulator.out_of_bounds)
+    qpa0_striker.learn(reward, new_state, done)
+    print(f"Step {step+1}/{DURATION_STEPS} reward: {reward} || {action_dict} || {simulator.ball_controller}")
     total_reward += reward
     old_state = new_state
-    if simulator.last_goal:
+
+    if done:
         break
-    elif simulator.out_of_bounds:
-        print(f"Ball out of bounds at ({simulator.ball.x:.2f}, {simulator.ball.y:.2f})")
-        break
-    # elif simulator.offside:
-    #     print("Offside! Ending this play")
-    #     break
 
     frame = renderer.render(simulator.snapshot())
     exporter.add_frame(frame)
-    current_time += dt
-    own_ball = simulator.ball_controller
-    if own_ball is None:
-        print("No player is controlling the ball")
-    else:
-        print(f"player {own_ball['team']} {own_ball['role']} is controlling the ball at ({own_ball['x']:.2f}, {own_ball['y']:.2f})")
-    # # print(f"Step {step+1}/{DURATION_STEPS}|| striker 4 x:{agents[3].get_state(players[3], players, ball, field)}")
-    # print(f"Step {step + 1}/{DURATION_STEPS}|| striker 4 action:{agents[3].decide_action(agents[3].get_state(players[3], players, ball, field), simulator.ball_controller)}")
-    # # print(f"Step {step+1}/{DURATION_STEPS}|| striker 5 x:{agents[4].get_state(players[4], players, ball, field)}")
-    print(f"Step {step + 1}/{DURATION_STEPS}|| striker 5 action:{agents[4].decide_action(agents[4].get_state(players[4], players, ball, field), simulator.ball_controller)}")
-    # # print(f"Step {step+1}/{DURATION_STEPS}|| striker 6 x:{agents[5].get_state(players[5], players, ball, field)}")
-    # print(f"Step {step + 1}/{DURATION_STEPS}|| striker 6 action:{agents[5].decide_action(agents[5].get_state(players[5], players, ball, field), simulator.ball_controller)}")
-    # # print(f"Step {step+1}/{DURATION_STEPS} RW: {players[8]}")
-
 
 #finalize
 exporter.export()

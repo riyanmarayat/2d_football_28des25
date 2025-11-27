@@ -1,5 +1,6 @@
 import random
 from agents.base_agent import FootballAgent
+from reinforcement_learning.dqn_agent import DQNCoreAgent
 
 class StrikerAgent(FootballAgent):
     def __init__(self, team):

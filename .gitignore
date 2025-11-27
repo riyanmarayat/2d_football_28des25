@@ -1,0 +1,8 @@
+# Ignore environment file
+.env
+
+# Ignore JetBrains IDE folder
+.idea/
+
+# Ignore exported archive
+2d_football_marl.zip
