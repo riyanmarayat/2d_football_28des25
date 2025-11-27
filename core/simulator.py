@@ -54,7 +54,8 @@ class Simulator:
             'ball_controller': self.ball_controller,
             'last_goal': self.last_goal,
             'out_of_bounds': self.out_of_bounds,
-            'step': self.step_count
+            'step': self.step_count,
+            'field': {'width': getattr(self.field, 'width', 100.0), 'height': getattr(self.field, 'height', 75.0)}
         }
 
     def step(self, dt: float):
@@ -72,6 +73,9 @@ class Simulator:
             # jika agent punya desired_velocity gunakan itu
             if hasattr(agent, 'desired_velocity'):
                 tvx, tvy = agent.desired_velocity(p, self.ball, self.field)
+                # gunakan langsung tanpa smoothing agar aksi DQN tidak ditimpa
+                p['vx'], p['vy'] = tvx, tvy
+                continue
             else:
                 # fallback: gunakan target (tx, ty) atau kejar bola
                 if 'tx' in p and 'ty' in p:
@@ -153,6 +157,27 @@ class Simulator:
     def apply_action(self, player, action, dt):
         if not isinstance(action, dict):
             return
+        # Raw velocity override (used by DQN). This keeps desired v through smoothing step.
+        if "move_vx" in action or "move_vy" in action:
+            player['vx'] = float(action.get('move_vx', player.get('vx', 0.0)))
+            player['vy'] = float(action.get('move_vy', player.get('vy', 0.0)))
+            player['tx'] = player['x']
+            player['ty'] = player['y']
+            player['speed'] = math.hypot(player['vx'], player['vy'])
+        # Kick handling when controller adalah pemain ini
+        if "kick_power" in action and action.get("kick_power", 0.0) > 0.0:
+            idx = self.players.index(player)
+            if self.ball_controller == idx:
+                dx, dy = action.get("kick_dir", (1.0, 0.0))
+                mag = (dx*dx + dy*dy) ** 0.5
+                if mag > 1e-6:
+                    dx /= mag; dy /= mag
+                power = float(action.get("kick_power", 0.0))
+                speed = 25.0 * max(0.0, min(1.0, power))
+                self.ball.vx = dx * speed
+                self.ball.vy = dy * speed
+                self.ball_controller = None
+
         t = action.get('type')
         if t == 'move':
             tx, ty = action.get('target', (player['x'], player['y']))
@@ -216,8 +241,10 @@ def computer_striker_reward(simulator, striker, old_state, new_state, action):
         r += 0.1
     # maintain possession (needs old_state present)
     if old_state is not None and isinstance(old_state, dict):
-        if old_state.get('ball_controller') == 'me' and new_state.get('ball_controller') == 'me':
+        old_ctrl = old_state.get('ball_controller')
+        new_ctrl = new_state.get('ball_controller')
+        if old_ctrl == 0 and new_ctrl == 0:
             r += 0.02
-        if old_state.get('ball_controller') == 'me' and new_state.get('ball_controller') not in ('me', None):
+        if old_ctrl == 0 and new_ctrl not in (0, None):
             r -= 0.3  # lost possession
     return r

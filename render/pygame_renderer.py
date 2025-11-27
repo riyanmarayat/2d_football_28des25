@@ -27,50 +27,52 @@ class PygameRenderer:
         if len(points) > 1:
             pygame.draw.lines(self.screen, color, False, points, width)
 
-    def get_horizontal_zones(self, y_world):
-        """Return which horizontal zone the y coordinate belongs to."""
-        field_zones = [
-            (0.0, 0.23, "Wing Left"),
-            (0.23, 0.4, "Half-Space Left"),
-            (0.4, 0.6, "Center Channel"),
-            (0.6, 0.77, "Half-Space Right"),
-            (0.77, 1.0, "Wing Right")
+    def get_vertical_lane(self, y_world, team='A'):
+        """Return vertical lane (left wing to right wing); mirrored for team B to keep perspective consistent."""
+        fractions = [0.0, 0.23, 0.4, 0.6, 0.77, 1.0]
+        names = [
+            "Left Wing / Flank",
+            "Left Half-Space",
+            "Central Corridor",
+            "Right Half-Space",
+            "Right Wing / Flank"
         ]
-        y_ratio = y_world / self.height
-        for low, high, name in field_zones:
-            if low <= y_ratio < high:
-                return name
-        return "Unknown"
+        y_ref = y_world if team.upper() == 'A' else self.height - y_world
+        y_ratio = y_ref / self.height
+        for i in range(len(fractions) - 1):
+            if fractions[i] <= y_ratio < fractions[i + 1]:
+                return names[i]
+        return names[-1]
+
+    def get_horizontal_third(self, x_world, team='A'):
+        """Return defensive/middle/attacking third, mirrored for team B to keep perspective consistent."""
+        ratio = (x_world if team.upper() == 'A' else self.width - x_world) / self.width
+        if ratio < 1/3:
+            return "Defensive Third"
+        elif ratio < 2/3:
+            return "Middle Third"
+        return "Attacking Third"
+
+    def get_horizontal_zones(self, y_world, team='A'):
+        # backward-compatible wrapper
+        return self.get_vertical_lane(y_world, team)
 
     def get_vertical_third(self, x_world, team='left'):
-        ratio = x_world / self.width
-        if team == 'left':
-            if ratio < 1/3:
-                return "Defensive Third"
-            elif ratio < 2/3:
-                return "Middle Third"
-            else:
-                return "Attacking Third"
-        elif team == 'right':
-            if ratio < 1/3:
-                return "Attacking Third"
-            elif ratio < 2/3:
-                return "Middle Third"
-            else:
-                return "Defensive Third"
-        return "Unknown"
+        # backward-compatible wrapper to preserve old API
+        return self.get_horizontal_third(x_world, 'A' if team == 'left' else 'B')
 
     def log_player_zones(self, state, current_time, save_log=False):
         for player in state["players"]:
             team = player["team"]
             x, y = player["x"], player["y"]
-            h_zone = self.get_horizontal_zones(y)
-            v_zone = self.get_vertical_third(x, team='left' if team == 'A' else 'right')
+            v_lane = self.get_vertical_lane(y, team=team)
+            h_third = self.get_horizontal_third(x, team=team)
+            line = f"Time {current_time:.2f}s | Team {team} | Pos ({x:.2f}, {y:.2f}) -> {v_lane}, {h_third}"
             if save_log==False:
-                print(f"Time {current_time:.2f}s | Team {team} | Pos ({x:.2f}, {y:.2f}) -> {h_zone}, {v_zone}")
+                print(line)
             else:
                 with open("zones_log.txt", "a") as f:
-                    f.write(f"Time {current_time:.2f}s | Team {team} | Pos ({x:.2f}, {y:.2f}) -> {h_zone}, {v_zone}\n")
+                    f.write(line + "\n")
 
 
     def render(self, state):
