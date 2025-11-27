@@ -1,8 +1,11 @@
 import time
+import os
+import torch
+from typing import List, Dict, Any
 from core.ball import Ball
 from core.field import Field
 from core.recorder import Recorder
-from core.simulator import Simulator, computer_striker_reward
+from core.simulator import Simulator, compute_agent_reward
 from render.pygame_renderer import PygameRenderer
 from render.video_exporter import VideoExporter
 from agents.striker.dqn_striker import DQNStriker
@@ -14,6 +17,40 @@ from agents.dqn_roles import (
 
 FPS = 15
 DURATION_STEPS = 1000
+NUM_EPISODES = int(os.environ.get("NUM_EPISODES", 1))
+CHECKPOINT_DIR = "checkpoints"
+
+def save_team_checkpoint(team_name: str, agents: List):
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    payload = []
+    for ag in agents:
+        if getattr(ag, "team", "").upper() == team_name.upper():
+            payload.append({
+                "state_dict": ag.policy_net.state_dict(),
+            })
+    path = os.path.join(CHECKPOINT_DIR, f"{team_name.upper()}.pth")
+    torch.save(payload, path)
+    print(f"Checkpoint saved for team {team_name} -> {path}")
+
+def load_team_checkpoint(team_name: str, agents: List):
+    path = os.path.join(CHECKPOINT_DIR, f"{team_name.upper()}.pth")
+    if not os.path.exists(path):
+        return
+    try:
+        payload = torch.load(path, map_location="cpu")
+    except Exception as e:
+        print(f"Failed to load checkpoint {path}: {e}")
+        return
+    # apply sequentially to agents of that team
+    idx = 0
+    for ag in agents:
+        if getattr(ag, "team", "").upper() != team_name.upper():
+            continue
+        if idx < len(payload):
+            ag.policy_net.load_state_dict(payload[idx]["state_dict"])
+            ag.target_net.load_state_dict(payload[idx]["state_dict"])
+            idx += 1
+    print(f"Loaded checkpoint for team {team_name} from {path}")
 
 # Fallback jika apply_action tidak menggerakkan pemain
 def apply_action_compat(simulator, player, action, dt):
@@ -51,119 +88,118 @@ def apply_action_compat(simulator, player, action, dt):
             simulator.ball.vx = dx * ball_speed
             simulator.ball.vy = dy * ball_speed
 
-players = []
-# TEAM A (LEFT) 4-4-2
-initial_positions_A = [
-    ('A', 'Goalkeeper', (5, 37.5)),
-    ('A', 'Left Fullback', (18, 20)),
-    ('A', 'Center Back', (18, 32)),
-    ('A', 'Center Back', (18, 45)),
-    ('A', 'Right Fullback', (18, 57)),
-    ('A', 'Left Midfielder', (35, 20)),
-    ('A', 'Central Midfielder', (35, 32)),
-    ('A', 'Central Midfielder', (35, 45)),
-    ('A', 'Right Midfielder', (35, 57)),
-    ('A', 'Striker', (55, 32)),
-    ('A', 'Striker', (55, 45)),
-]
-for team, role, (x, y) in initial_positions_A:
-    players.append({'team': team, 'role': role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
-
-# TEAM B (RIGHT) 4-3-3
-initial_positions_B = [
-    ('B', 'Goalkeeper', (95, 37.5)),
-    ('B', 'Right Fullback', (82, 20)),
-    ('B', 'Center Back', (82, 32)),
-    ('B', 'Center Back', (82, 45)),
-    ('B', 'Left Fullback', (82, 57)),
-    ('B', 'Central Midfielder', (65, 25)),
-    ('B', 'Central Midfielder', (65, 37.5)),
-    ('B', 'Central Midfielder', (65, 50)),
-    ('B', 'Right Winger', (55, 20)),
-    ('B', 'Striker', (55, 37.5)),
-    ('B', 'Left Winger', (55, 55)),
-]
-for team, role, (x, y) in initial_positions_B:
-    players.append({'team': team, 'role': role, 'x': x, 'y': y, 'vx': 0.0, 'vy': 0.0})
-
-ball = Ball(field_width=100, field_height=75)
 field = Field(width=100, height=75)
-recorder = Recorder()
-renderer = PygameRenderer(width=100, height=75, scale=10, show_horizontal_zones=False, show_vertical_zones=False)
-exporter = VideoExporter("simulation.mp4", fps=FPS)
 
-# Map each player dict to its agent instance
-agents = []
-for idx, p in enumerate(players):
-    role = p['role'].lower()
-    team = p['team']
-    if role == 'goalkeeper':
-        agents.append(DQNGoalkeeperAgent(team, player_index=idx, seed=idx))
-    elif role == 'center back':
-        agents.append(DQNCenterBackAgent(team, player_index=idx, seed=idx))
-    elif role == 'right fullback':
-        agents.append(DQNRightFullbackAgent(team, player_index=idx, seed=idx))
-    elif role == 'left fullback':
-        agents.append(DQNLeftFullbackAgent(team, player_index=idx, seed=idx))
-    elif role == 'central midfielder':
-        agents.append(DQNCentralMidfielderAgent(team, player_index=idx, seed=idx))
-    elif role == 'right midfielder':
-        agents.append(DQNRightMidfielderAgent(team, player_index=idx, seed=idx))
-    elif role == 'left midfielder':
-        agents.append(DQNLeftMidfielderAgent(team, player_index=idx, seed=idx))
-    elif role == 'right winger':
-        agents.append(DQNRightWingerAgent(team, player_index=idx, seed=idx))
-    elif role == 'left winger':
-        agents.append(DQNLeftWingerAgent(team, player_index=idx, seed=idx))
-    elif role == 'striker':
-        agents.append(DQNStriker(team, player_index=idx, seed=idx))  # atau buat kelas sendiri
+team_formations = {
+    "A": [("Goalkeeper", (5, 37.5)),
+          ("Left Fullback", (18, 20)), ("Center Back", (18, 32)), ("Center Back", (18, 45)), ("Right Fullback", (18, 57)),
+          ("Left Midfielder", (35, 20)), ("Central Midfielder", (35, 32)), ("Central Midfielder", (35, 45)), ("Right Midfielder", (35, 57)),
+          ("Striker", (42, 32)), ("Striker", (42, 45))],
+    "B": [("Goalkeeper", (5, 37.5)),
+          ("Right Fullback", (18, 20)), ("Center Back", (18, 32)), ("Center Back", (18, 45)), ("Left Fullback", (18, 57)),
+          ("Central Midfielder", (35, 25)), ("Central Midfielder", (35, 37.5)), ("Central Midfielder", (35, 50)),
+          ("Right Winger", (40, 25)), ("Striker", (45, 37.5)), ("Left Winger", (40, 50))],
+    "C": [("Goalkeeper", (5, 37.5)),
+          ("Left Fullback", (18, 25)), ("Center Back", (18, 37.5)), ("Right Fullback", (18, 50)),
+          ("Central Midfielder", (35, 25)), ("Central Midfielder", (35, 50)), ("Central Midfielder", (40, 37.5)),
+          ("Right Winger", (40, 25)), ("Left Winger", (40, 50)),
+          ("Striker", (45, 37.5))],
+    "D": [("Goalkeeper", (5, 37.5)),
+          ("Center Back", (15, 25)), ("Center Back", (15, 37.5)), ("Center Back", (15, 50)),
+          ("Right Midfielder", (30, 22)), ("Left Midfielder", (30, 53)), ("Central Midfielder", (35, 32)), ("Central Midfielder", (35, 45)), ("Central Midfielder", (40, 37.5)),
+          ("Striker", (45, 32)), ("Striker", (45, 45))]
+}
 
-# Build simulator
-simulator = Simulator(agents, players, ball, field, recorder, fps=FPS)
+team_left = input("Pilih tim kiri (A/B/C/D) [default A]: ").strip().upper() or "A"
+team_right = input("Pilih tim kanan (A/B/C/D) [default B]: ").strip().upper() or "B"
 
-old_state = simulator.snapshot()
-total_rewards = [0.0 for _ in agents]
+def build_players(team_name: str, side: str) -> List[Dict[str, Any]]:
+    tpl = []
+    base_positions = team_formations.get(team_name, team_formations["A"])
+    for role, (x, y) in base_positions:
+        px = x if side == "left" else field.width - x
+        tpl.append({"team": team_name, "role": role, "x": px, "y": y, "vx": 0.0, "vy": 0.0, "side": side})
+    return tpl
 
-# Initialize last_state for each agent
-for ag in agents:
-    ag.extract_features(old_state)
+for ep in range(NUM_EPISODES):
+    # rebuild players and agents per episode to keep indices/side aligned
+    players = build_players(team_left, "left") + build_players(team_right, "right")
+    role_cls = {
+        'goalkeeper': DQNGoalkeeperAgent,
+        'center back': DQNCenterBackAgent,
+        'right fullback': DQNRightFullbackAgent,
+        'left fullback': DQNLeftFullbackAgent,
+        'central midfielder': DQNCentralMidfielderAgent,
+        'right midfielder': DQNRightMidfielderAgent,
+        'left midfielder': DQNLeftMidfielderAgent,
+        'right winger': DQNRightWingerAgent,
+        'left winger': DQNLeftWingerAgent,
+        'striker': DQNStriker,
+    }
+    agents = []
+    for idx, p in enumerate(players):
+        role = p['role'].lower()
+        team = p['team']
+        side = p.get("side", "left")
+        cls = role_cls.get(role, DQNCentralMidfielderAgent)
+        agents.append(cls(team=team, player_index=idx, side=side, seed=idx + ep * 100))
 
-for step in range(DURATION_STEPS):
-    dt = 1.0 / FPS
+    # Load checkpoints for both teams if available
+    load_team_checkpoint(team_left, agents)
+    load_team_checkpoint(team_right, agents)
 
-    actions = []
-    for i, (agent, player) in enumerate(zip(agents, players)):
-        action_idx = agent.select_action(old_state)
-        action_dict = agent.action_index_to_dict(action_idx)
-        actions.append(action_dict)
-        simulator.apply_action(player, action_dict, dt)
+    ball = Ball(field_width=field.width, field_height=field.height)
+    recorder = Recorder()
+    renderer = PygameRenderer(width=field.width, height=field.height, scale=10, show_horizontal_zones=False, show_vertical_zones=False)
+    exporter = VideoExporter(f"simulation_ep{ep+1}.mp4", fps=FPS)
 
-    # Step simulator
-    simulator.step(dt=dt)
+    simulator = Simulator(agents, players, ball, field, recorder, fps=FPS)
 
-    # Snapshot baru
-    new_state = simulator.snapshot()
-    done = bool(simulator.last_goal or simulator.out_of_bounds)
+    old_state = simulator.snapshot()
+    total_rewards = [0.0 for _ in agents]
 
-    # Learn untuk tiap agen
-    for i, agent in enumerate(agents):
-        reward = computer_striker_reward(simulator, agent, old_state, new_state, actions[i])
-        if agent.last_action_idx is not None:
-            agent.learn(reward, new_state, done)
-        total_rewards[i] += reward
+    # Initialize last_state for each agent
+    for ag in agents:
+        ag.extract_features(old_state)
 
-    # log sederhana untuk agen pertama
-    print(f"Step {step+1}/{DURATION_STEPS} reward_p0: {total_rewards[0]:.3f} pos=({players[0]['x']:.2f},{players[0]['y']:.2f})")
-    old_state = new_state
+    for step in range(DURATION_STEPS):
+        dt = 1.0 / FPS
 
-    frame = renderer.render(new_state)
-    exporter.add_frame(frame)
+        actions = []
+        for i, (agent, player) in enumerate(zip(agents, players)):
+            action_idx = agent.select_action(old_state)
+            action_dict = agent.action_index_to_dict(action_idx)
+            actions.append(action_dict)
+            simulator.apply_action(player, action_dict, dt)
 
-    if done:
-        break
+        simulator.step(dt=dt)
 
-# finalize
-exporter.export()
-renderer.quit()
-print(f"Simulation save to {exporter.path}")
-print(f"Episode rewards (sum): {total_rewards}")
+        new_state = simulator.snapshot()
+        done = bool(simulator.last_goal or simulator.out_of_bounds or simulator.offside)
+
+        for i, agent in enumerate(agents):
+            reward = compute_agent_reward(simulator, agent, old_state, new_state, actions[i])
+            if agent.last_action_idx is not None:
+                agent.learn(reward, new_state, done)
+            total_rewards[i] += reward
+
+        print(f"[Ep {ep+1}] Step {step+1}/{DURATION_STEPS} reward_p0: {total_rewards[0]:.3f} pos=({players[0]['x']:.2f},{players[0]['y']:.2f})")
+        old_state = new_state
+
+        frame = renderer.render(new_state)
+        exporter.add_frame(frame)
+
+        if done:
+            break
+
+    exporter.export()
+    renderer.quit()
+    print(f"Episode {ep+1} saved to {exporter.path}")
+    print(f"Episode rewards (sum): {total_rewards}")
+
+    # Save checkpoints per team
+    save_team_checkpoint(team_left, agents)
+    save_team_checkpoint(team_right, agents)
+    if (ep + 1) % 100 == 0:
+        save_team_checkpoint(f"{team_left}_ep{ep+1}", agents)
+        save_team_checkpoint(f"{team_right}_ep{ep+1}", agents)

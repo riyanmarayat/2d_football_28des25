@@ -124,6 +124,9 @@ class Simulator:
             if hasattr(self.ball, 'vx'):
                 self.ball.vx *= 0.985
                 self.ball.vy *= 0.985
+        # cek keluar lapangan
+        if self.ball.x < 0 or self.ball.x > self.field.width or self.ball.y < 0 or self.ball.y > self.field.height:
+            self.out_of_bounds = True
         # peluang blok bola oleh pemain lain (tanpa kontrol)
         if self.ball_controller is None:
             for i, p in enumerate(self.players):
@@ -242,34 +245,60 @@ class Simulator:
             self.recorder.append(snap)
 
     # tetap (reward dll) ...
-def computer_striker_reward(simulator, striker, old_state, new_state, action):
+def compute_agent_reward(simulator, agent, old_state, new_state, action):
     """
-    Compute reward safely even if old_state is None.
-    Expected new_state format can be adjusted; here we rely on simulator and action only.
+    Reward shaping sederhana untuk multi-agen DQN.
     """
     r = 0.0
-    idx = getattr(striker, "player_index", 0)
-    # goal reward
+    team = agent.team.upper()
+    side = getattr(agent, "side", "left")
+    idx = getattr(agent, "player_index", 0)
+
+    # goal reward/penalty
     if simulator.last_goal:
-        # if team A scores when attacking right goal
-        scored_side = simulator.last_goal  # 'left' or 'right'
-        # assume team A attacks right, team B attacks left
-        if striker.team.upper() == 'A' and scored_side == 'right':
-            r += 1.0
-        elif striker.team.upper() == 'B' and scored_side == 'left':
-            r += 1.0
-    # ball control reward
-    if action.get('type') == 'control':
-        r += 0.05
-    # pass reward (simple)
-    if action.get('type') == 'pass':
-        r += 0.1
-    # maintain possession (needs old_state present)
-    if old_state is not None and isinstance(old_state, dict):
-        old_ctrl = old_state.get('ball_controller')
-        new_ctrl = new_state.get('ball_controller')
-        if old_ctrl == idx and new_ctrl == idx:
-            r += 0.02
-        if old_ctrl == idx and new_ctrl not in (idx, None):
-            r -= 0.3  # lost possession
+        if simulator.last_goal == 'right':   # menyerang kanan
+            r += 1.0 if side == 'left' else -1.0
+        elif simulator.last_goal == 'left':  # menyerang kiri
+            r += 1.0 if side == 'right' else -1.0
+
+    # possession change
+    old_ctrl = old_state.get('ball_controller') if old_state else None
+    new_ctrl = new_state.get('ball_controller')
+    if new_ctrl == idx and old_ctrl != idx:
+        r += 0.2
+    if old_ctrl == idx and new_ctrl != idx:
+        r -= 0.2
+    if new_ctrl == idx:
+        r += 0.02
+
+    # progress bola menuju gawang lawan
+    old_ball = old_state.get('ball') if old_state else None
+    new_ball = new_state.get('ball')
+    if old_ball and new_ball:
+        dx = new_ball['x'] - old_ball['x']
+        if side == 'left':
+            r += 0.005 * dx
+        else:
+            r -= 0.005 * dx
+
+    # mendekati bola
+    players_old = old_state.get('players') if old_state else None
+    players_new = new_state.get('players')
+    if players_old and players_new and 0 <= idx < len(players_old):
+        po = players_old[idx]
+        pn = players_new[idx]
+        bo = old_ball if old_ball else {'x':0,'y':0}
+        bn = new_ball if new_ball else {'x':0,'y':0}
+        dist_old = ((po['x']-bo['x'])**2 + (po['y']-bo['y'])**2) ** 0.5
+        dist_new = ((pn['x']-bn['x'])**2 + (pn['y']-bn['y'])**2) ** 0.5
+        r += 0.01 * (dist_old - dist_new)
+
+    # waktu
+    r -= 0.001
+
+    # end conditions penalty/bonus
+    if simulator.out_of_bounds:
+        r -= 0.2  # penalti bola keluar
+    if simulator.offside:
+        r -= 0.2  # penalti offside
     return r

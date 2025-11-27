@@ -69,7 +69,8 @@ class DQNStriker:
         team: str = "A",
         seed: Optional[int] = 42,
         player_index: int = 0,
-        state_dim: int = 58,
+        side: str = "left",  # "left" atau "right" di lapangan
+        state_dim: int = 56,
         n_actions: int = ACTION_COUNT,
         gamma: float = 0.99,
         lr: float = 1e-3,
@@ -85,6 +86,7 @@ class DQNStriker:
     ):
         self.team = team.upper()
         self.player_index = player_index
+        self.side = side.lower()
         self.rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
         self.state_dim = state_dim
         self.n_actions = n_actions
@@ -149,7 +151,7 @@ class DQNStriker:
         mvx, mvy = float(a.get("move_vx", 0.0)), float(a.get("move_vy", 0.0))
         kpow, kdir = float(a.get("kick_power", 0.0)), a.get("kick_dir", None)
         # simpan dalam frame dunia; untuk tim B dibalik arah X
-        if self.team == "B":
+        if self.side == "right":
             mvx = -mvx
             if kdir is not None:
                 kdir = (-kdir[0], kdir[1])
@@ -162,9 +164,11 @@ class DQNStriker:
         # role guard rails sederhana: GK stay di gawang, CB jaga garis, support off-ball
         vx, vy = self._last_action_vel
         role = str(player.get("role", "")).lower()
-        # goal center (world)
-        gx = 0.0 if player.get("team", "A").upper() == "B" else field.width
-        gy = field.height / 2
+        # goal center ditentukan oleh side (left menyerang kanan)
+        if self.side == "left":
+            gx, gy = field.width, field.height / 2
+        else:
+            gx, gy = 0.0, field.height / 2
         if role == "goalkeeper":
             dx, dy = gx - player["x"], gy - player["y"]
             d = math.hypot(dx, dy) + 1e-6
@@ -246,12 +250,12 @@ class DQNStriker:
         self_player = players[idx] if players else {"x": 0.0, "y": 0.0, "vx": 0.0, "vy": 0.0, "team": self.team}
 
         def mirror_pos(x, y):
-            if self.team == "A":
+            if self.side == "left":
                 return x, y
             return field_w - x, y
 
         def mirror_vel(vx, vy):
-            if self.team == "A":
+            if self.side == "left":
                 return vx, vy
             return -vx, vy
 
@@ -279,6 +283,22 @@ class DQNStriker:
 
         angle_ball_sin, angle_ball_cos = ball_dir_y, ball_dir_x
         angle_goal_sin, angle_goal_cos = goal_dir_y, goal_dir_x
+        # goal mouth distance & opening angle (ego frame, opponent goal on right)
+        goal_top = field_h / 2 - 7.32 / 2
+        goal_bot = field_h / 2 + 7.32 / 2
+        gx_seg = field_w
+        # distance point to vertical segment
+        if sy < goal_top:
+            dist_goal_mouth = math.hypot(gx_seg - sx, goal_top - sy)
+        elif sy > goal_bot:
+            dist_goal_mouth = math.hypot(gx_seg - sx, sy - goal_bot)
+        else:
+            dist_goal_mouth = abs(gx_seg - sx)
+        # opening angle
+        ang_top = math.atan2(goal_top - sy, gx_seg - sx)
+        ang_bot = math.atan2(goal_bot - sy, gx_seg - sx)
+        opening_angle = abs(ang_top - ang_bot)
+        opening_angle_norm = opening_angle / math.pi
 
         ctrl_team = None
         ctrl_idx = None
@@ -400,15 +420,14 @@ class DQNStriker:
         zone_att = 1.0 if sx >= 2 * field_w / 3 else 0.0
 
         pressing_intensity = opp_count_r10_norm
+        time_frac = min(1.0, step / max_steps)
 
         feat = np.array([
             norm(sx_raw, field_w), norm(sy_raw, field_h),
-            norm(sx_raw, field_w), norm(sy_raw, field_h),  # field ratio (redundan)
             norm(ball_dx, field_w), norm(ball_dy, field_h),
             norm(bvx, max_ball_speed), norm(bvy, max_ball_speed),
             norm(ball_dist, diag), angle_ball_sin, angle_ball_cos,
-            norm(goal_dx, field_w), norm(goal_dy, field_h),
-            norm(goal_dist, diag), angle_goal_sin, angle_goal_cos,
+            norm(dist_goal_mouth, diag), angle_goal_sin, angle_goal_cos, opening_angle_norm,
             bc_me, bc_tm, bc_op,
             nearest_opp_dx, nearest_opp_dy, nearest_opp_dist,
             opp_count_r10_norm,
@@ -421,6 +440,7 @@ class DQNStriker:
             pressing_intensity,
             shooting_window_open,
             off_ball_run_viable,
+            time_frac,
             *self._last_action_one_hot.tolist(),
         ], dtype=np.float32)
 
