@@ -56,28 +56,18 @@ class ReplayBuffer:
 
 class DQNStriker:
     """
-    DQN untuk Striker dengan:
-    - State feature konsisten (panjang 32) diekstrak dari snapshot simulator.
-    - Action space lengkap dan stabil (13 aksi).
-    - Epsilon-greedy, target network, dan experience replay.
-
-    Action dict schema yang dihasilkan:
-      {
-        "move_vx": float,   # kecepatan X (unit/s)
-        "move_vy": float,   # kecepatan Y (unit/s)
-        "kick_power": float,# 0..1
-        "kick_dir": (dx, dy)# unit vector arah kick, or None
-      }
-    Pastikan simulator.apply_action(player, action_dict, dt) mendukung field di atas.
-    Jika simulator Anda menggunakan field lain, sesuaikan fungsi action_index_to_dict.
+    DQN agent dengan observasi egosentris (B di-mirror ke kiri) dan action set 20 aksi balanced.
     """
+
+    ACTION_COUNT = 20
 
     def __init__(
         self,
         team: str = "A",
         seed: Optional[int] = 42,
-        state_dim: int = 48,
-        n_actions: int = 13,
+        player_index: int = 0,
+        state_dim: int = 61,
+        n_actions: int = ACTION_COUNT,
         gamma: float = 0.99,
         lr: float = 1e-3,
         batch_size: int = 64,
@@ -87,10 +77,11 @@ class DQNStriker:
         epsilon_start: float = 1.0,
         epsilon_end: float = 0.05,
         epsilon_decay_steps: int = 5_000,
-        max_move_speed: float = 12.0,   # unit per second
-        sprint_multiplier: float = 1.6,
+        max_move_speed: float = 6.0,
+        sprint_multiplier: float = 1.2,
     ):
         self.team = team.upper()
+        self.player_index = player_index
         self.rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
         self.state_dim = state_dim
         self.n_actions = n_actions
@@ -102,7 +93,6 @@ class DQNStriker:
         self.train_steps = 0
         self.last_state: Optional[np.ndarray] = None
 
-        # epsilon scheduling
         self.epsilon = epsilon_start
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
@@ -124,102 +114,92 @@ class DQNStriker:
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=lr)
         self.loss_fn = nn.SmoothL1Loss()
 
-        # last_action_idx for training loop book-keeping
         self.last_action_idx: Optional[int] = None
         self._last_action_vel: Tuple[float, float] = (0.0, 0.0)
         self._last_action_kick: Tuple[float, Optional[Tuple[float, float]]] = (0.0, None)
+        self._last_action_one_hot = np.zeros(self.n_actions, dtype=np.float32)
 
-        # Precompute action vectors
-        self._actions = self._build_action_space()
-        # cache indices untuk aksi gerak (vx,vy != 0 dan kick=0)
-        self._move_indices = [
-            i for i, a in enumerate(self._actions)
-            if (abs(a.get("move_vx", 0.0)) > 1e-6 or abs(a.get("move_vy", 0.0)) > 1e-6)
-            and abs(a.get("kick_power", 0.0)) < 1e-6
-        ]
-
-    # ------------- Public API -------------
+        self._ego = {
+            "sx": 0.0, "sy": 0.0,
+            "bx": 0.0, "by": 0.0,
+            "ball_carrier_idx": None,
+            "opp_goal": (100.0, 37.5),
+            "field_w": 100.0, "field_h": 75.0,
+            "players": [],
+            "best_tm_world": None,
+            "opp_team": "B" if self.team == "A" else "A",
+        }
 
     def select_action(self, snapshot: Dict[str, Any]) -> int:
-        """
-        menerima snapshot simulator, mengekstrak fitur state, lalu pilih idx aksi.
-        """
         state_vec = self.extract_features(snapshot)
+        self._actions = self._build_action_space()
         if self.rng.random() < self.epsilon:
-            # eksplorasi: 80% ke arah bola, 20% random
-            if self.rng.random() < 0.8:
-                action = self._action_towards_ball(snapshot)
-            else:
-                action = int(self.rng.integers(0, self.n_actions))
+            action = int(self.rng.integers(0, self.n_actions))
         else:
             with torch.no_grad():
                 q = self.policy_net(torch.tensor(state_vec, dtype=torch.float32).unsqueeze(0))
                 action = int(torch.argmax(q, dim=1).item())
         self.last_action_idx = action
-        # cache velocity & kick so simulator can query via desired_velocity
+        self._last_action_one_hot = np.zeros(self.n_actions, dtype=np.float32)
+        self._last_action_one_hot[action] = 1.0
         a = self._actions[action]
-        self._last_action_vel = (float(a.get("move_vx", 0.0)), float(a.get("move_vy", 0.0)))
-        self._last_action_kick = (float(a.get("kick_power", 0.0)), a.get("kick_dir", None))
-        # update epsilon (linear decay)
+        mvx, mvy = float(a.get("move_vx", 0.0)), float(a.get("move_vy", 0.0))
+        kpow, kdir = float(a.get("kick_power", 0.0)), a.get("kick_dir", None)
+        # simpan dalam frame dunia; untuk tim B dibalik arah X
+        if self.team == "B":
+            mvx = -mvx
+            if kdir is not None:
+                kdir = (-kdir[0], kdir[1])
+        self._last_action_vel = (mvx, mvy)
+        self._last_action_kick = (kpow, kdir)
         self._decay_epsilon()
         return action
 
     def desired_velocity(self, player, ball, field) -> Tuple[float, float]:
-        """
-        Dipanggil simulator untuk agen yang menyediakan desired_velocity.
-        Mengembalikan v dari aksi terakhir agar tidak ditimpa logic default.
-        """
-        return self._last_action_vel
+        # role guard rails sederhana: GK stay di gawang, CB jaga garis, support off-ball
+        vx, vy = self._last_action_vel
+        role = str(player.get("role", "")).lower()
+        # goal center (world)
+        gx = 0.0 if player.get("team", "A").upper() == "B" else field.width
+        gy = field.height / 2
+        if role == "goalkeeper":
+            dx, dy = gx - player["x"], gy - player["y"]
+            d = math.hypot(dx, dy) + 1e-6
+            return (dx / d) * 4.0, (dy / d) * 4.0
+        if "center back" in role:
+            # jaga zona defensif
+            target_x = field.width * (0.25 if player.get("team", "A").upper() == "A" else 0.75)
+            dx, dy = target_x - player["x"], (ball.y - player["y"])
+            d = math.hypot(dx, dy) + 1e-6
+            return (dx / d) * 5.0, (dy / d) * 5.0
+        # jika bukan ball controller dan teammate pegang bola, cari ruang (half-space)
+        bc = getattr(ball, "controller", None) if hasattr(ball, "controller") else None
+        if bc is not None and bc != self.player_index and player.get("team", "").upper() == ("A" if self.team == "A" else "B"):
+            offset = 8.0 if (self.player_index % 2 == 0) else -8.0
+            target_y = max(0.0, min(field.height, ball.y + offset))
+            target_x = min(field.width * 0.65, ball.x + 6.0) if self.team == "A" else max(field.width * 0.35, ball.x - 6.0)
+            dx, dy = target_x - player["x"], target_y - player["y"]
+            d = math.hypot(dx, dy) + 1e-6
+            return (dx / d) * 5.5, (dy / d) * 5.5
+        return vx, vy
 
     def action_index_to_dict(self, action_idx: int) -> Dict[str, Any]:
-        """
-        Mengubah index aksi menjadi dict untuk simulator.
-        """
-        return self._actions[action_idx]
-
-    def _action_towards_ball(self, snapshot: Dict[str, Any]) -> int:
-        """Cari aksi gerak paling mendekati arah bola (heuristik eksplorasi)."""
-        players: List[Dict[str, Any]] = snapshot.get("players", [])
-        ball: Dict[str, Any] = snapshot.get("ball", {})
-        if not players:
-            return int(self.rng.integers(0, self.n_actions))
-        sx, sy = float(players[0].get("x", 0.0)), float(players[0].get("y", 0.0))
-        bx, by = float(ball.get("x", 0.0)), float(ball.get("y", 0.0))
-        dx, dy = bx - sx, by - sy
-        norm = math.sqrt(dx * dx + dy * dy)
-        if norm > 1e-6:
-            dx /= norm; dy /= norm
-        best_idx = 0
-        best_dot = -1e9
-        for i in self._move_indices:
-            a = self._actions[i]
-            ax, ay = float(a.get("move_vx", 0.0)), float(a.get("move_vy", 0.0))
-            amag = math.sqrt(ax*ax + ay*ay)
-            if amag < 1e-6:
-                continue
-            ax /= amag; ay /= amag
-            dot = ax * dx + ay * dy
-            if dot > best_dot:
-                best_dot = dot
-                best_idx = i
-        return best_idx
+        base = dict(self._actions[action_idx])
+        if self.team == "B":
+            base["move_vx"] = -base.get("move_vx", 0.0)
+            if base.get("kick_dir") is not None:
+                kx, ky = base["kick_dir"]
+                base["kick_dir"] = (-kx, ky)
+        return base
 
     def learn(self, reward: float, next_snapshot: Dict[str, Any], done: bool):
-        """
-        Menyimpan transition dan melakukan satu langkah update saat buffer cukup.
-        """
         if self.last_state is None or self.last_action_idx is None:
-            # Tidak ada state terakhir yang valid (misalnya di step pertama).
             return
-
         next_state_vec = self.extract_features(next_snapshot)
         self.buffer.push(self.last_state, self.last_action_idx, reward, next_state_vec, done)
-
         if len(self.buffer) < self.min_buffer_to_learn:
             self.last_state = next_state_vec
             return
-
-        # Sample
         states, actions, rewards, next_states, dones = self.buffer.sample(self.batch_size)
         states_t = torch.tensor(states, dtype=torch.float32)
         actions_t = torch.tensor(actions, dtype=torch.int64).unsqueeze(1)
@@ -227,18 +207,14 @@ class DQNStriker:
         next_states_t = torch.tensor(next_states, dtype=torch.float32)
         dones_t = torch.tensor(dones, dtype=torch.float32).unsqueeze(1)
 
-        # Q(s,a)
         q_values = self.policy_net(states_t).gather(1, actions_t)
-
-        # target Q
         with torch.no_grad():
-            next_q_policy = self.policy_net(next_states_t)              # for argmax
+            next_q_policy = self.policy_net(next_states_t)
             next_actions = torch.argmax(next_q_policy, dim=1, keepdim=True)
             next_q_target = self.target_net(next_states_t).gather(1, next_actions)
             target = rewards_t + (1.0 - dones_t) * self.gamma * next_q_target
 
         loss = self.loss_fn(q_values, target)
-
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), max_norm=5.0)
@@ -248,280 +224,326 @@ class DQNStriker:
         if self.train_steps % self.target_update_interval == 0:
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
-        # update last state
         self.last_state = next_state_vec
 
-    # ------------- State Features -------------
-
     def extract_features(self, snapshot: Dict[str, Any]) -> np.ndarray:
-        """
-        Produces a fixed-length feature vector (size = self.state_dim).
-        Assumes snapshot contains keys typically produced by your Simulator.snapshot().
-        If your snapshot schema differs, adjust the extraction accordingly.
-
-        Feature layout (48 total):
-        - Self/ball kinematics: self pos/vel (4), ball pos/vel (4)
-        - Tactical zones (mirrored for team B): self vertical lane one-hot (5), self horizontal third one-hot (3),
-          ball vertical lane one-hot (5), ball horizontal third one-hot (3)
-        - Possession: has_ball_self, has_ball_team_other, has_ball_opponent
-        - Goal/relative vectors: opponent goal pos (2), self->ball dir+dist (3), ball->goal dir+dist (3)
-        - Nearest entities: nearest teammate pos/vel (4), nearest opponent pos/vel (4)
-        - Meta: team_side flag, ball_controller_self, stamina proxy, time_normalized, bias
-        """
         field_info = snapshot.get("field", {})
         field_w = float(field_info.get("width", 100.0))
         field_h = float(field_info.get("height", 75.0))
-        max_speed = self.max_move_speed * self.sprint_multiplier
+        diag = math.sqrt(field_w * field_w + field_h * field_h)
+        max_ball_speed = 30.0
 
-        # players list of dicts:
         players: List[Dict[str, Any]] = snapshot.get("players", [])
         ball: Dict[str, Any] = snapshot.get("ball", {})
-        controller = snapshot.get("ball_controller", None)  # could be index or dict
-        time = snapshot.get("time", 0.0)
-        duration = snapshot.get("duration", 1.0)
+        controller = snapshot.get("ball_controller", None)
+        step = float(snapshot.get("step", 0))
+        max_steps = float(snapshot.get("duration", 1000) or 1000)
 
-        # find self index: assume first player in players for our agent as in main.py
-        self_player = players[0] if players else {"x": 0.0, "y": 0.0, "vx": 0.0, "vy": 0.0, "team": self.team}
+        idx = min(self.player_index, len(players) - 1) if players else 0
+        self_player = players[idx] if players else {"x": 0.0, "y": 0.0, "vx": 0.0, "vy": 0.0, "team": self.team}
 
-        sx, sy = float(self_player.get("x", 0.0)), float(self_player.get("y", 0.0))
-        svx, svy = float(self_player.get("vx", 0.0)), float(self_player.get("vy", 0.0))
-
-        bx, by = float(ball.get("x", field_w / 2)), float(ball.get("y", field_h / 2))
-        bvx, bvy = float(ball.get("vx", 0.0)), float(ball.get("vy", 0.0))
-
-        # normalize helpers
-        def norm_pos(x, y):
-            return x / field_w, y / field_h
-
-        def norm_vel(vx, vy):
-            return vx / max_speed, vy / max_speed
-
-        def orient(x, y):
-            """Mirror coords for team B so state stays consistent left-to-right."""
+        def mirror_pos(x, y):
             if self.team == "A":
                 return x, y
-            return field_w - x, field_h - y
+            return field_w - x, y
 
-        def lane_one_hot(y_norm):
-            # vertical lanes across pitch width (top-bottom), mirrored by orient()
-            bounds = [0.0, 0.23, 0.4, 0.6, 0.77, 1.0]
-            zone = 4
-            for i in range(len(bounds) - 1):
-                if bounds[i] <= y_norm < bounds[i + 1]:
-                    zone = i
-                    break
-            return [1.0 if zone == i else 0.0 for i in range(5)]
+        def mirror_vel(vx, vy):
+            if self.team == "A":
+                return vx, vy
+            return -vx, vy
 
-        def third_one_hot(x_norm):
-            # defensive/middle/attacking thirds along length, mirrored by orient()
-            bounds = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]
-            zone = 2
-            for i in range(len(bounds) - 1):
-                if bounds[i] <= x_norm < bounds[i + 1]:
-                    zone = i
-                    break
-            return [1.0 if zone == i else 0.0 for i in range(3)]
+        sx_raw, sy_raw = float(self_player.get("x", 0.0)), float(self_player.get("y", 0.0))
+        svx_raw, svy_raw = float(self_player.get("vx", 0.0)), float(self_player.get("vy", 0.0))
+        sx, sy = mirror_pos(sx_raw, sy_raw)
+        svx, svy = mirror_vel(svx_raw, svy_raw)
 
-        # controller flags
-        has_ball_self = 0.0
-        has_ball_team_other = 0.0
-        has_ball_opponent = 0.0
+        bx_raw, by_raw = float(ball.get("x", field_w / 2)), float(ball.get("y", field_h / 2))
+        bvx_raw, bvy_raw = float(ball.get("vx", 0.0)), float(ball.get("vy", 0.0))
+        bx, by = mirror_pos(bx_raw, by_raw)
+        bvx, bvy = mirror_vel(bvx_raw, bvy_raw)
 
-        # controller parsing
-        controller_team = None
-        controller_idx = None
-        if isinstance(controller, dict):
-            controller_team = controller.get("team", None)
-            controller_idx = controller.get("index", None)
-        elif isinstance(controller, int):
-            controller_idx = controller
-            if 0 <= controller_idx < len(players):
-                controller_team = players[controller_idx].get("team", None)
-        elif isinstance(controller, str):
-            controller_team = controller
+        def norm(val, denom):
+            return val / (denom + 1e-6)
 
-        if controller_idx == 0:
-            has_ball_self = 1.0
-        elif controller_team is not None:
-            if controller_team == self.team:
-                has_ball_team_other = 1.0
-            else:
-                has_ball_opponent = 1.0
-
-        # goal positions (assume goals centered on left (x=0) and right (x=field_w))
-        if self.team == "A":
-            # attacking right goal
-            opp_goal_x, opp_goal_y = field_w, field_h / 2
-            team_side = 1.0
-        else:
-            opp_goal_x, opp_goal_y = 0.0, field_h / 2
-            team_side = 0.0
-
-        # vectors and distances
-        def safe_norm(dx, dy):
+        def rel(dx, dy):
             d = math.sqrt(dx * dx + dy * dy) + 1e-6
             return dx / d, dy / d, d
 
-        sb_dx, sb_dy, sb_dist = safe_norm(bx - sx, by - sy)
-        bg_dx, bg_dy, bg_dist = safe_norm(opp_goal_x - bx, opp_goal_y - by)
+        ball_dx, ball_dy = bx - sx, by - sy
+        ball_dir_x, ball_dir_y, ball_dist = rel(ball_dx, ball_dy)
+        goal_dx, goal_dy = field_w - sx, (field_h / 2) - sy
+        goal_dir_x, goal_dir_y, goal_dist = rel(goal_dx, goal_dy)
 
-        # nearest teammate/opponent (excluding self)
-        def nearest(filter_team: str) -> Tuple[float, float, float, float]:
-            best_d = 1e9
-            best = (0.0, 0.0, 0.0, 0.0)
-            for i, p in enumerate(players):
-                if i == 0:
-                    continue
-                if p.get("team", "").upper() != filter_team.upper():
-                    continue
-                dx = float(p.get("x", 0.0)) - sx
-                dy = float(p.get("y", 0.0)) - sy
-                d = dx * dx + dy * dy
-                if d < best_d:
-                    best_d = d
-                    best = (float(p.get("x", 0.0)),
-                            float(p.get("y", 0.0)),
-                            float(p.get("vx", 0.0)),
-                            float(p.get("vy", 0.0)))
-            nx, ny = norm_pos(best[0], best[1])
-            nvx, nvy = norm_vel(best[2], best[3])
-            return nx, ny, nvx, nvy
+        angle_ball_sin, angle_ball_cos = ball_dir_y, ball_dir_x
+        angle_goal_sin, angle_goal_cos = goal_dir_y, goal_dir_x
 
-        nt_x, nt_y, nt_vx, nt_vy = nearest(self.team)
+        ctrl_team = None
+        ctrl_idx = None
+        if isinstance(controller, dict):
+            ctrl_team = controller.get("team", None)
+            ctrl_idx = controller.get("index", None)
+        elif isinstance(controller, int):
+            ctrl_idx = controller
+            if 0 <= ctrl_idx < len(players):
+                ctrl_team = players[ctrl_idx].get("team", None)
+        elif isinstance(controller, str):
+            ctrl_team = controller
+
+        bc_none = 1.0 if controller in (None, -1) else 0.0
+        bc_me = 1.0 if ctrl_idx == idx else 0.0
+        bc_tm = 1.0 if (ctrl_team == self.team and ctrl_idx != idx) else 0.0
+        bc_op = 1.0 if (ctrl_team is not None and ctrl_team != self.team) else 0.0
+
         opp_team = "B" if self.team == "A" else "A"
-        no_x, no_y, no_vx, no_vy = nearest(opp_team)
+        nearest_opp = (0.0, 0.0, 1e9)
+        opp_count_r8 = 0
+        opp_count_r16 = 0
+        for p in players:
+            if p.get("team", "").upper() != opp_team:
+                continue
+            px, py = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+            dx, dy = px - sx, py - sy
+            d = math.sqrt(dx * dx + dy * dy)
+            if d < nearest_opp[2]:
+                nearest_opp = (dx, dy, d)
+            if d < 8.0:
+                opp_count_r8 += 1
+            if d < 16.0:
+                opp_count_r16 += 1
 
-        # normalize
-        nsx, nsy = norm_pos(sx, sy)
-        nsvx, nsvy = norm_vel(svx, svy)
-        nbx, nby = norm_pos(bx, by)
-        nbvx, nbvy = norm_vel(bvx, bvy)
-        n_goal_x, n_goal_y = norm_pos(opp_goal_x, opp_goal_y)
-        n_sb_dist = math.sqrt(sb_dist) / math.sqrt(field_w * field_w + field_h * field_h)
-        n_bg_dist = math.sqrt(bg_dist) / math.sqrt(field_w * field_w + field_h * field_h)
+        nearest_opp_dx = norm(nearest_opp[0], field_w)
+        nearest_opp_dy = norm(nearest_opp[1], field_h)
+        nearest_opp_dist = norm(nearest_opp[2], diag)
+        max_opp = max(1, sum(1 for p in players if p.get("team", "").upper() == opp_team))
+        opp_count_r8_norm = opp_count_r8 / max_opp
+        opp_count_r16_norm = opp_count_r16 / max_opp
 
-        # zones mirrored to keep B perspective consistent
-        osx, osy = orient(sx, sy)
-        obx, oby = orient(bx, by)
-        vertical_zone = lane_one_hot(osy / field_h if field_h > 0 else 0.0)
-        horizontal_third = third_one_hot(osx / field_w if field_w > 0 else 0.0)
-        ball_vertical_zone = lane_one_hot(oby / field_h if field_h > 0 else 0.0)
-        ball_horizontal_third = third_one_hot(obx / field_w if field_w > 0 else 0.0)
+        best_tm = None
+        best_score = -1e9
+        for i, p in enumerate(players):
+            if i == idx or p.get("team", "").upper() != self.team:
+                continue
+            px, py = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+            dx, dy = px - sx, py - sy
+            dist = math.sqrt(dx * dx + dy * dy)
+            min_opp_d = 1e9
+            for q in players:
+                if q.get("team", "").upper() != opp_team:
+                    continue
+                qx, qy = mirror_pos(float(q.get("x", 0.0)), float(q.get("y", 0.0)))
+                d_opp = math.sqrt((qx - px) ** 2 + (qy - py) ** 2)
+                min_opp_d = min(min_opp_d, d_opp)
+            score = -dist + 0.5 * min_opp_d
+            if score > best_score:
+                best_score = score
+                best_tm = (dx, dy, dist, min_opp_d, px, py)
 
-        time_norm = float(time) / float(duration) if duration > 0 else 0.0
+        if best_tm is None:
+            best_tm_dx = best_tm_dy = best_tm_dist = 0.0
+            best_tm_is_open = 0.0
+            best_tm_world = None
+        else:
+            best_tm_dx = norm(best_tm[0], field_w)
+            best_tm_dy = norm(best_tm[1], field_h)
+            best_tm_dist = norm(best_tm[2], diag)
+            best_tm_is_open = 1.0 if best_tm[3] > 5.0 else 0.0
+            bt_xw = best_tm[4] if self.team == "A" else field_w - best_tm[4]
+            bt_yw = best_tm[5]
+            best_tm_world = (bt_xw, bt_yw)
+
+        tm_ahead = 0
+        tm_total = 0
+        for i, p in enumerate(players):
+            if p.get("team", "").upper() != self.team or i == idx:
+                continue
+            tm_total += 1
+            px, _ = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+            if px > sx:
+                tm_ahead += 1
+        teammate_count_ahead_norm = tm_ahead / max(1, tm_total)
+
+        def line_clear(target_x, target_y, radius=2.0):
+            min_d = 1e9
+            vx, vy = target_x - sx, target_y - sy
+            denom = vx * vx + vy * vy + 1e-6
+            for p in players:
+                if p.get("team", "").upper() != opp_team:
+                    continue
+                px, py = mirror_pos(float(p.get("x", 0.0)), float(p.get("y", 0.0)))
+                t = max(0.0, min(1.0, ((px - sx) * vx + (py - sy) * vy) / denom))
+                proj_x = sx + t * vx
+                proj_y = sy + t * vy
+                d = math.sqrt((px - proj_x) ** 2 + (py - proj_y) ** 2)
+                min_d = min(min_d, d)
+            return min_d > radius
+
+        pass_lane_open = 1.0 if best_tm and line_clear(sx + best_tm[0], sy + best_tm[1], radius=1.5) else 0.0
+        shooting_window_open = 1.0 if line_clear(field_w, field_h / 2, radius=2.5) else 0.0
+        dribble_lane_open = 1.0 if line_clear(bx, by, radius=1.5) else 0.0
+
+        def lane_y_one_hot(y_norm):
+            bounds = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+            idx_lane = 4
+            for i in range(len(bounds) - 1):
+                if bounds[i] <= y_norm < bounds[i + 1]:
+                    idx_lane = i
+                    break
+            return [1.0 if idx_lane == i else 0.0 for i in range(5)]
+
+        def thirds_x_one_hot(x_norm):
+            bounds = [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]
+            idx_third = 2
+            for i in range(len(bounds) - 1):
+                if bounds[i] <= x_norm < bounds[i + 1]:
+                    idx_third = i
+                    break
+            return [1.0 if idx_third == i else 0.0 for i in range(3)]
+
+        lane_y = lane_y_one_hot(norm(sy, field_h))
+        thirds_x = thirds_x_one_hot(norm(sx, field_w))
+
+        out_of_bounds = 1.0 if snapshot.get("out_of_bounds", False) else 0.0
+        time_frac = min(1.0, step / max_steps)
 
         feat = np.array([
-            nsx, nsy,
-            nsvx, nsvy,
-            nbx, nby,
-            nbvx, nbvy,
-            *vertical_zone,               # 8-12
-            *horizontal_third,            # 13-15
-            *ball_vertical_zone,          # 16-20
-            *ball_horizontal_third,       # 21-23
-            has_ball_self,                # 24
-            has_ball_team_other,          # 25
-            has_ball_opponent,            # 26
-            n_goal_x, n_goal_y,           # 27-28
-            sb_dx, sb_dy,                 # 29-30
-            n_sb_dist,                    # 31
-            bg_dx, bg_dy,                 # 32-33
-            n_bg_dist,                    # 34
-            nt_x, nt_y, nt_vx, nt_vy,     # 35-38
-            no_x, no_y, no_vx, no_vy,     # 39-42
-            team_side,                    # 43
-            1.0 if has_ball_self > 0.5 else 0.0,  # 44
-            1.0,                                   # 45 stamina proxy
-            time_norm,                              # 46
-            1.0                                    # 47 bias
+            norm(sx, field_w), norm(sy, field_h),
+            norm(ball_dx, field_w), norm(ball_dy, field_h),
+            norm(bvx, max_ball_speed), norm(bvy, max_ball_speed),
+            norm(ball_dist, diag), angle_ball_sin, angle_ball_cos,
+            norm(goal_dx, field_w), norm(goal_dy, field_h),
+            norm(goal_dist, diag), angle_goal_sin, angle_goal_cos,
+            bc_none, bc_me, bc_tm, bc_op,
+            nearest_opp_dx, nearest_opp_dy, nearest_opp_dist,
+            opp_count_r8_norm, opp_count_r16_norm,
+            best_tm_dx, best_tm_dy, best_tm_dist, best_tm_is_open,
+            teammate_count_ahead_norm,
+            pass_lane_open, shooting_window_open, dribble_lane_open,
+            *lane_y,
+            *thirds_x,
+            out_of_bounds,
+            *self._last_action_one_hot.tolist(),
+            time_frac
         ], dtype=np.float32)
 
-        # store last_state for learn()
         self.last_state = feat
+        self._ego = {
+            "sx": sx, "sy": sy,
+            "bx": bx, "by": by,
+            "ball_carrier_idx": ctrl_idx,
+            "opp_goal": (field_w, field_h / 2),
+            "field_w": field_w, "field_h": field_h,
+            "players": players,
+            "best_tm_world": best_tm_world,
+            "opp_team": opp_team,
+        }
         return feat
 
-    # ------------- Action Space -------------
-
     def _build_action_space(self) -> List[Dict[str, Any]]:
-        """
-        Builds 13 actions:
-        0: idle
-        1-8: move in 8 directions at normal speed
-        9-12: sprint move (N, S, E, W) at sprint speed
-        13-15: shoot to goal (low/med/high) — NOTE: we fix to 3 levels by replacing 9-12 scheme to keep n_actions=13
-        """
+        e = self._ego
+        sx, sy = e["sx"], e["sy"]
+        bx, by = e["bx"], e["by"]
+        gx, gy = e["opp_goal"]
+        fw = e["field_w"]
+        fh = e["field_h"]
+        best_tm_world = e.get("best_tm_world")
+        players = e.get("players", [])
+        opp_team = e.get("opp_team")
         actions: List[Dict[str, Any]] = []
 
-        # idle
+        def mv(dx, dy, speed):
+            nd = math.sqrt(dx * dx + dy * dy)
+            if nd < 1e-6:
+                return 0.0, 0.0
+            return dx / nd * speed, dy / nd * speed
+
+        def mirror_pos(x, y):
+            if self.team == "A":
+                return x, y
+            return fw - x, y
+
+        # 0 idle
         actions.append(self._make_action(0.0, 0.0, 0.0, None))
 
-        # 8-direction moves (unit circle)
+        # 1-8 moves (N,NE,E,SE,S,SW,W,NW) dalam frame ego
         dirs = [
-            (1, 0),   # E
-            (-1, 0),  # W
-            (0, 1),   # S (assuming y grows downward in screen coords)
-            (0, -1),  # N
-            (1, 1),   # SE
-            (1, -1),  # NE
-            (-1, 1),  # SW
-            (-1, -1), # NW
+            (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)
         ]
         for dx, dy in dirs:
-            ndx, ndy = self._unit(dx, dy)
-            actions.append(self._make_action(ndx * self.max_move_speed, ndy * self.max_move_speed, 0.0, None))
+            vx, vy = mv(dx, dy, self.max_move_speed)
+            actions.append(self._make_action(vx, vy, 0.0, None))
 
-        # 4-direction sprint (N, S, E, W) to keep action count reasonable
-        sprint_dirs = [
-            (1, 0),   # E
-            (-1, 0),  # W
-            (0, 1),   # S
-            (0, -1),  # N
-        ]
-        for dx, dy in sprint_dirs:
-            ndx, ndy = self._unit(dx, dy)
-            actions.append(self._make_action(ndx * self.max_move_speed * self.sprint_multiplier,
-                                             ndy * self.max_move_speed * self.sprint_multiplier,
-                                             0.0, None))
+        # 9 sprint forward (ke gawang lawan)
+        vx, vy = mv(gx - sx, gy - sy, self.max_move_speed * self.sprint_multiplier)
+        actions.append(self._make_action(vx, vy, 0.0, None))
 
-        # Replace last sprint to 3 shooting actions to cap at 13 total.
-        # Total currently: 1 + 8 + 4 = 13, we will modify indices 9..12 to be shots instead:
-        # To maintain exact 13 actions: we will rebuild with 1 + 8 + 4_sprint OR 3 shots.
-        # Better: Keep 13 as 1 idle + 8 moves + 4 actions: 2 sprint + 1 pass + 1 shoot.
-        # For clarity and completeness, we reconstruct list deterministically:
+        # 10 control ball (mendekati bola)
+        vx, vy = mv(bx - sx, by - sy, self.max_move_speed * 0.6)
+        actions.append(self._make_action(vx, vy, 0.0, None))
 
-        actions = []
-        actions.append(self._make_action(0.0, 0.0, 0.0, None))  # 0 idle
+        # 11 dribble toward goal + lateral noise
+        lat = self.rng.uniform(-0.3, 0.3)
+        vx, vy = mv((gx - sx) + lat, (gy - sy) + lat, self.max_move_speed * 0.8)
+        actions.append(self._make_action(vx, vy, 0.0, None))
 
-        # 8 moves (1..8)
-        for dx, dy in dirs:
-            ndx, ndy = self._unit(dx, dy)
-            actions.append(self._make_action(ndx * self.max_move_speed, ndy * self.max_move_speed, 0.0, None))
+        # 12 pass short
+        if best_tm_world is not None:
+            txw, tyw = best_tm_world
+            tx, ty = (txw if self.team == "A" else fw - txw), tyw
+            dx, dy = tx - sx, ty - sy
+            mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+            actions.append(self._make_action(0.0, 0.0, 0.4, (dx / mag, dy / mag)))
+        else:
+            actions.append(self._make_action(0.0, 0.0, 0.0, None))
 
-        # 9 sprint east
-        ndx, ndy = self._unit(1, 0)
-        actions.append(self._make_action(ndx * self.max_move_speed * self.sprint_multiplier,
-                                         ndy * self.max_move_speed * self.sprint_multiplier,
-                                         0.0, None))
-        # 10 sprint north
-        ndx, ndy = self._unit(0, -1)
-        actions.append(self._make_action(ndx * self.max_move_speed * self.sprint_multiplier,
-                                         ndy * self.max_move_speed * self.sprint_multiplier,
-                                         0.0, None))
+        # 13 through pass (lead forward)
+        if best_tm_world is not None:
+            txw, tyw = best_tm_world
+            lead_xw = txw + 4.0
+            tx, ty = (lead_xw if self.team == "A" else fw - lead_xw), tyw
+            dx, dy = tx - sx, ty - sy
+            mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+            actions.append(self._make_action(0.0, 0.0, 0.65, (dx / mag, dy / mag)))
+        else:
+            actions.append(self._make_action(0.0, 0.0, 0.0, None))
 
-        # 11 shoot to opponent goal (medium power)
-        actions.append(self._shoot_action(power=0.6))
+        # 14 lob pass
+        if best_tm_world is not None:
+            txw, tyw = best_tm_world
+            tx, ty = (txw if self.team == "A" else fw - txw), tyw
+            dx, dy = tx - sx, ty - sy
+            mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+            actions.append(self._make_action(0.0, 0.0, 0.9, (dx / mag, dy / mag)))
+        else:
+            actions.append(self._make_action(0.0, 0.0, 0.0, None))
 
-        # 12 shoot to opponent goal (high power)
-        actions.append(self._shoot_action(power=1.0))
+        # 15 shoot power
+        dx, dy = gx - sx, gy - sy
+        mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+        actions.append(self._make_action(0.0, 0.0, 1.0, (dx / mag, dy / mag)))
 
-        # Now len(actions) == 13
+        # 16 shoot placed
+        actions.append(self._make_action(0.0, 0.0, 0.7, (dx / mag, dy / mag)))
+
+        # 17 tackle (dash ke bola)
+        vx, vy = mv(bx - sx, by - sy, self.max_move_speed * self.sprint_multiplier)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # 18 block lane (midpoint bola->gawang)
+        midx, midy = (bx + gx) / 2, (by + gy) / 2
+        vx, vy = mv(midx - sx, midy - sy, self.max_move_speed * 0.9)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # 19 press (ke ball carrier kalau ada)
+        bc_idx = e.get("ball_carrier_idx")
+        if bc_idx is not None and 0 <= bc_idx < len(players):
+            pc = players[bc_idx]
+            px, py = mirror_pos(float(pc.get("x", 0.0)), float(pc.get("y", 0.0)))
+        else:
+            px, py = bx, by
+        vx, vy = mv(px - sx, py - sy, self.max_move_speed * 1.05)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
         return actions
-
-    def _unit(self, dx: float, dy: float) -> Tuple[float, float]:
-        d = math.sqrt(dx * dx + dy * dy)
-        if d < 1e-6:
-            return 0.0, 0.0
-        return dx / d, dy / d
 
     def _make_action(self, vx: float, vy: float, kick_power: float, kick_dir: Optional[Tuple[float, float]]) -> Dict[str, Any]:
         return {
@@ -530,14 +552,6 @@ class DQNStriker:
             "kick_power": float(kick_power),
             "kick_dir": None if kick_dir is None else (float(kick_dir[0]), float(kick_dir[1])),
         }
-
-    def _shoot_action(self, power: float) -> Dict[str, Any]:
-        # shoot towards opponent goal based on team side; direction will be re-evaluated in apply_action phase by simulator,
-        # but we provide a default dir: +x for A, -x for B.
-        default_dir = (1.0, 0.0) if self.team == "A" else (-1.0, 0.0)
-        return self._make_action(0.0, 0.0, power, default_dir)
-
-    # ------------- Utils -------------
 
     def _decay_epsilon(self):
         if self.epsilon_decay_steps <= 0:

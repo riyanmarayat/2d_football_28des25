@@ -13,6 +13,8 @@ RELEASE_RADIUS = 1.8
 ACCEL_FACTOR = 6.0
 MAX_SPEED = 6.0
 SUBSTEPS = 2
+BLOCK_RADIUS = 1.2
+BLOCK_REFLECT = 0.4
 
 class Simulator:
     def __init__(self, agents, players, ball, field, recorder, fps=1):
@@ -122,6 +124,23 @@ class Simulator:
             if hasattr(self.ball, 'vx'):
                 self.ball.vx *= 0.985
                 self.ball.vy *= 0.985
+        # peluang blok bola oleh pemain lain (tanpa kontrol)
+        if self.ball_controller is None:
+            for i, p in enumerate(self.players):
+                dx = self.ball.x - p['x']
+                dy = self.ball.y - p['y']
+                d2 = dx*dx + dy*dy
+                if d2 < BLOCK_RADIUS*BLOCK_RADIUS:
+                    # d20 roll sederhana: sukses blok bila roll/20 < 0.7
+                    if random.random() < 0.7:
+                        speed = math.hypot(self.ball.vx, self.ball.vy)
+                        nx, ny = (dx / (math.sqrt(d2)+1e-6), dy / (math.sqrt(d2)+1e-6))
+                        # refleksi sebagian ke arah berlawanan
+                        self.ball.vx = -nx * speed * BLOCK_REFLECT
+                        self.ball.vy = -ny * speed * BLOCK_REFLECT
+                        # bola berhenti dekat pemain, kontrol peluang
+                        if speed < 12.0 and random.random() < 0.5:
+                            self.ball_controller = i
 
     def _handle_possession(self):
         if self.ball_controller is not None:
@@ -137,9 +156,14 @@ class Simulator:
                 dx = self.ball.x - p['x']
                 dy = self.ball.y - p['y']
                 d2 = dx*dx + dy*dy
-                if d2 < min_d2 and (getattr(self.ball, 'vx', 0.0)**2 + getattr(self.ball, 'vy', 0.0)**2) < 9.0:
-                    min_idx = i
-                    min_d2 = d2
+                ball_speed2 = (getattr(self.ball, 'vx', 0.0)**2 + getattr(self.ball, 'vy', 0.0)**2)
+                if d2 < min_d2 and ball_speed2 < 36.0:
+                    # d20 roll: peluang sukses kontrol menurun saat bola cepat
+                    roll = random.random()  # 0-1; treat as roll/20
+                    success_prob = max(0.2, 1.0 - (ball_speed2 / 400.0))  # cepat => lebih sulit
+                    if roll < success_prob:
+                        min_idx = i
+                        min_d2 = d2
             if min_idx is not None:
                 self.ball_controller = min_idx
 
@@ -224,6 +248,7 @@ def computer_striker_reward(simulator, striker, old_state, new_state, action):
     Expected new_state format can be adjusted; here we rely on simulator and action only.
     """
     r = 0.0
+    idx = getattr(striker, "player_index", 0)
     # goal reward
     if simulator.last_goal:
         # if team A scores when attacking right goal
@@ -243,8 +268,8 @@ def computer_striker_reward(simulator, striker, old_state, new_state, action):
     if old_state is not None and isinstance(old_state, dict):
         old_ctrl = old_state.get('ball_controller')
         new_ctrl = new_state.get('ball_controller')
-        if old_ctrl == 0 and new_ctrl == 0:
+        if old_ctrl == idx and new_ctrl == idx:
             r += 0.02
-        if old_ctrl == 0 and new_ctrl not in (0, None):
+        if old_ctrl == idx and new_ctrl not in (idx, None):
             r -= 0.3  # lost possession
     return r
