@@ -59,10 +59,11 @@ class ReplayBuffer:
 
 class DQNStriker:
     """
-    DQN agent dengan observasi egosentris (B di-mirror ke kiri) dan action set 20 aksi balanced.
+    DQN agent dengan observasi egosentris (B di-mirror ke kiri) dan action set 24 aksi balanced
+    yang menggabungkan aksi arah + target situasional (home/support/half-space).
     """
 
-    ACTION_COUNT = 20
+    ACTION_COUNT = 24
 
     def __init__(
         self,
@@ -70,7 +71,7 @@ class DQNStriker:
         seed: Optional[int] = 42,
         player_index: int = 0,
         side: str = "left",  # "left" atau "right" di lapangan
-        state_dim: int = 56,
+        state_dim: int = 60,
         n_actions: int = ACTION_COUNT,
         gamma: float = 0.99,
         lr: float = 1e-3,
@@ -133,6 +134,7 @@ class DQNStriker:
             "players": [],
             "best_tm_world": None,
             "opp_team": "B" if self.team == "A" else "A",
+            "home_pos": (0.0, 0.0),
         }
 
     def select_action(self, snapshot: Dict[str, Any]) -> int:
@@ -270,6 +272,9 @@ class DQNStriker:
         svx_raw, svy_raw = float(self_player.get("vx", 0.0)), float(self_player.get("vy", 0.0))
         sx, sy = mirror_pos(sx_raw, sy_raw)
         svx, svy = mirror_vel(svx_raw, svy_raw)
+
+        home_x_raw, home_y_raw = float(self_player.get("home_x", sx_raw)), float(self_player.get("home_y", sy_raw))
+        home_x, home_y = mirror_pos(home_x_raw, home_y_raw)
 
         bx_raw, by_raw = float(ball.get("x", field_w / 2)), float(ball.get("y", field_h / 2))
         bvx_raw, bvy_raw = float(ball.get("vx", 0.0)), float(ball.get("vy", 0.0))
@@ -461,6 +466,7 @@ class DQNStriker:
             "players": players,
             "best_tm_world": best_tm_world,
             "opp_team": opp_team,
+            "home_pos": (home_x, home_y),
         }
         return feat
 
@@ -474,6 +480,7 @@ class DQNStriker:
         best_tm_world = e.get("best_tm_world")
         players = e.get("players", [])
         opp_team = e.get("opp_team")
+        home_x, home_y = e.get("home_pos", (sx, sy))
         actions: List[Dict[str, Any]] = []
 
         def mv(dx, dy, speed):
@@ -567,6 +574,30 @@ class DQNStriker:
         else:
             px, py = bx, by
         vx, vy = mv(px - sx, py - sy, self.max_move_speed * 1.05)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # 20 go to home position (jaga shape)
+        hx, hy = home_x, home_y
+        vx, vy = mv(hx - sx, hy - sy, self.max_move_speed * 0.85)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # 21 go to support pocket: sedikit di depan bola dan offset samping
+        support_x = min(fw, bx + 6.0)
+        offset_y = 6.0 if sy < by else -6.0
+        support_y = max(0.0, min(fh, by + offset_y))
+        vx, vy = mv(support_x - sx, support_y - sy, self.max_move_speed * 0.95)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # 22 go to half-space top (opsi lari tanpa bola)
+        tgt_x = fw * 0.92
+        tgt_y = fh * 0.28
+        vx, vy = mv(tgt_x - sx, tgt_y - sy, self.max_move_speed)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # 23 go to half-space bottom
+        tgt_x = fw * 0.92
+        tgt_y = fh * 0.72
+        vx, vy = mv(tgt_x - sx, tgt_y - sy, self.max_move_speed)
         actions.append(self._make_action(vx, vy, 0.0, None))
 
         return actions
