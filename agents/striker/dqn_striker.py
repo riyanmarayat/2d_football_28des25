@@ -161,36 +161,40 @@ class DQNStriker:
         return action
 
     def desired_velocity(self, player, ball, field) -> Tuple[float, float]:
-        # role guard rails sederhana: GK stay di gawang, CB jaga garis, support off-ball
+        # Guard rails minimal: hanya fallback jika aksi RL diam.
         vx, vy = self._last_action_vel
         role = str(player.get("role", "")).lower()
-        # goal center ditentukan oleh side (left menyerang kanan)
         own_gx = 0.0 if self.side == "left" else field.width
-        gx, gy = own_gx, field.height / 2
+        goal_line_x = own_gx
+        gx, gy = goal_line_x, field.height / 2
+
+        def unit(dx, dy, speed):
+            d = math.hypot(dx, dy) + 1e-6
+            return (dx / d) * speed, (dy / d) * speed
+
+        # jika RL sudah memberi kecepatan signifikan, pakai itu
+        if abs(vx) + abs(vy) > 1e-3:
+            return vx, vy
+
         if role == "goalkeeper":
-            # tetap di sekitar gawang sendiri (sedikit keluar max 20% lapangan)
-            target_x = own_gx + (field.width * 0.1 if self.side == "left" else -field.width * 0.1)
-            dx, dy = target_x - player["x"], gy - player["y"]
-            d = math.hypot(dx, dy) + 1e-6
-            return (dx / d) * 3.5, (dy / d) * 3.5
+            # fallback: jaga gawang
+            target_x = goal_line_x + (field.width * 0.05 if self.side == "left" else -field.width * 0.05)
+            target_y = max(0.0, min(field.height, ball.y))
+            return unit(target_x - player["x"], target_y - player["y"], 3.0)
+
         if "center back" in role:
-            # jaga zona defensif
-            target_x = field.width * 0.25 if self.side == "left" else field.width * 0.75
-            dx, dy = target_x - player["x"], (ball.y - player["y"])
-            d = math.hypot(dx, dy) + 1e-6
-            return (dx / d) * 5.0, (dy / d) * 5.0
-        # jika bukan ball controller dan teammate pegang bola, cari ruang (half-space)
-        bc = getattr(ball, "controller", None) if hasattr(ball, "controller") else None
-        if bc is not None and bc != self.player_index and player.get("team", "").upper() == ("A" if self.team == "A" else "B"):
-            offset = 8.0 if (self.player_index % 2 == 0) else -8.0
-            target_y = max(0.0, min(field.height, ball.y + offset))
-            if self.side == "left":
-                target_x = min(field.width * 0.65, ball.x + 6.0)
-            else:
-                target_x = max(field.width * 0.35, ball.x - 6.0)
-            dx, dy = target_x - player["x"], target_y - player["y"]
-            d = math.hypot(dx, dy) + 1e-6
-            return (dx / d) * 5.5, (dy / d) * 5.5
+            home_y = player.get("home_y", player["y"])
+            tgt_x = field.width * 0.25 if self.side == "left" else field.width * 0.75
+            tgt_y = 0.2 * ball.y + 0.8 * home_y
+            return unit(tgt_x - player["x"], tgt_y - player["y"], 4.0)
+
+        if "fullback" in role:
+            home_y = player.get("home_y", player["y"])
+            tgt_x = field.width * 0.35 if self.side == "left" else field.width * 0.65
+            tgt_y = 0.3 * ball.y + 0.7 * home_y
+            return unit(tgt_x - player["x"], tgt_y - player["y"], 4.5)
+
+        # default: aksi RL (meski nol)
         return vx, vy
 
     def action_index_to_dict(self, action_idx: int) -> Dict[str, Any]:

@@ -17,23 +17,26 @@ from agents.dqn_roles import (
 
 FPS = 15
 DURATION_STEPS = 1000
-NUM_EPISODES = int(os.environ.get("NUM_EPISODES", 1))
+try:
+    NUM_EPISODES = int(input("Berapa episode training? [default 1]: ") or "1")
+except Exception:
+    NUM_EPISODES = 1
 CHECKPOINT_DIR = "checkpoints"
 
-def save_team_checkpoint(team_name: str, agents: List):
+def save_team_checkpoint(team_name: str, agents: List, side: str):
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
     payload = []
     for ag in agents:
-        if getattr(ag, "team", "").upper() == team_name.upper():
+        if getattr(ag, "team", "").upper() == team_name.upper() and getattr(ag, "side", "left") == side:
             payload.append({
                 "state_dict": ag.policy_net.state_dict(),
             })
-    path = os.path.join(CHECKPOINT_DIR, f"{team_name.upper()}.pth")
+    path = os.path.join(CHECKPOINT_DIR, f"{team_name.upper()}_{side}.pth")
     torch.save(payload, path)
-    print(f"Checkpoint saved for team {team_name} -> {path}")
+    print(f"Checkpoint saved for team {team_name} side {side} -> {path}")
 
-def load_team_checkpoint(team_name: str, agents: List):
-    path = os.path.join(CHECKPOINT_DIR, f"{team_name.upper()}.pth")
+def load_team_checkpoint(team_name: str, agents: List, side: str):
+    path = os.path.join(CHECKPOINT_DIR, f"{team_name.upper()}_{side}.pth")
     if not os.path.exists(path):
         return
     try:
@@ -44,13 +47,13 @@ def load_team_checkpoint(team_name: str, agents: List):
     # apply sequentially to agents of that team
     idx = 0
     for ag in agents:
-        if getattr(ag, "team", "").upper() != team_name.upper():
+        if getattr(ag, "team", "").upper() != team_name.upper() or getattr(ag, "side", "left") != side:
             continue
         if idx < len(payload):
             ag.policy_net.load_state_dict(payload[idx]["state_dict"])
             ag.target_net.load_state_dict(payload[idx]["state_dict"])
             idx += 1
-    print(f"Loaded checkpoint for team {team_name} from {path}")
+    print(f"Loaded checkpoint for team {team_name} side {side} from {path}")
 
 # Fallback jika apply_action tidak menggerakkan pemain
 def apply_action_compat(simulator, player, action, dt):
@@ -118,7 +121,8 @@ def build_players(team_name: str, side: str) -> List[Dict[str, Any]]:
     base_positions = team_formations.get(team_name, team_formations["A"])
     for role, (x, y) in base_positions:
         px = x if side == "left" else field.width - x
-        tpl.append({"team": team_name, "role": role, "x": px, "y": y, "vx": 0.0, "vy": 0.0, "side": side})
+        tpl.append({"team": team_name, "role": role, "x": px, "y": y, "vx": 0.0, "vy": 0.0, "side": side,
+                    "home_x": px, "home_y": y})
     return tpl
 
 for ep in range(NUM_EPISODES):
@@ -144,9 +148,9 @@ for ep in range(NUM_EPISODES):
         cls = role_cls.get(role, DQNCentralMidfielderAgent)
         agents.append(cls(team=team, player_index=idx, side=side, seed=idx + ep * 100))
 
-    # Load checkpoints for both teams if available
-    load_team_checkpoint(team_left, agents)
-    load_team_checkpoint(team_right, agents)
+    # Load checkpoints untuk sisi kiri/kanan jika ada
+    load_team_checkpoint(team_left, agents, "left")
+    load_team_checkpoint(team_right, agents, "right")
 
     ball = Ball(field_width=field.width, field_height=field.height)
     recorder = Recorder()
@@ -217,8 +221,8 @@ for ep in range(NUM_EPISODES):
     print(f"Episode log saved to {log_path}")
 
     # Save checkpoints per team
-    save_team_checkpoint(team_left, agents)
-    save_team_checkpoint(team_right, agents)
+    save_team_checkpoint(team_left, agents, "left")
+    save_team_checkpoint(team_right, agents, "right")
     if (ep + 1) % 100 == 0:
-        save_team_checkpoint(f"{team_left}_ep{ep+1}", agents)
-        save_team_checkpoint(f"{team_right}_ep{ep+1}", agents)
+        save_team_checkpoint(f"{team_left}_ep{ep+1}", agents, "left")
+        save_team_checkpoint(f"{team_right}_ep{ep+1}", agents, "right")
