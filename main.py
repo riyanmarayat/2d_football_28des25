@@ -3,6 +3,7 @@ import os
 import math
 import json
 import csv
+import random
 import torch
 from typing import List, Dict, Any, Optional
 from core.ball import Ball
@@ -17,6 +18,7 @@ from agents.dqn_roles import (
     DQNCentralMidfielderAgent, DQNRightMidfielderAgent, DQNLeftMidfielderAgent,
     DQNRightWingerAgent, DQNLeftWingerAgent,
 )
+from core.scenario_bank import sample_episode_scenario
 
 FPS = 15
 DURATION_STEPS = 1000
@@ -118,7 +120,7 @@ class StatsTracker:
         self.pending_passes: List[Dict[str, Any]] = []
         self.pending_shots: List[Dict[str, Any]] = []
 
-    def start_episode(self, players: List[Dict[str, Any]]):
+    def start_episode(self, players: List[Dict[str, Any]], scenario_name: str = "default", scenario_variant: int = 0):
         self.player_meta = {
             i: {
                 "team": p.get("team", "?"),
@@ -127,6 +129,8 @@ class StatsTracker:
             }
             for i, p in enumerate(players)
         }
+        self.scenario_name = scenario_name
+        self.scenario_variant = scenario_variant
         self.player_stats = {
             i: {
                 "dribbles": 0, "tackles": 0, "blocks": 0,
@@ -385,6 +389,8 @@ class StatsTracker:
                     "category": "team",
                     "window": "",
                     "episode": episode_idx,
+                    "scenario": self.scenario_name,
+                    "scenario_variant": self.scenario_variant,
                     "entity": team,
                     "team": team,
                     "role": "",
@@ -411,6 +417,8 @@ class StatsTracker:
                 "category": "player",
                 "window": "",
                 "episode": episode_idx,
+                "scenario": self.scenario_name,
+                "scenario_variant": self.scenario_variant,
                 "entity": f"p{idx}",
                 "team": meta.get("team", "?"),
                 "role": meta.get("role", "?"),
@@ -444,6 +452,8 @@ class StatsTracker:
                 "window": window_label,
                 "episode": end_ep,
                 "entity": team,
+                "scenario": "",
+                "scenario_variant": "",
                 "team": team,
                 "role": "",
                 "possession_pct": poss_pct,
@@ -468,6 +478,8 @@ class StatsTracker:
                 "category": category,
                 "window": window_label,
                 "episode": end_ep,
+                "scenario": "",
+                "scenario_variant": "",
                 "entity": f"p{idx}",
                 "team": meta.get("team", "?"),
                 "role": meta.get("role", "?"),
@@ -537,6 +549,17 @@ if video_mode == "interval":
         video_interval = int(input("Simpan video tiap berapa episode? [default 10]: ") or "10")
     except Exception:
         video_interval = 10
+try:
+    scenario_seed_input = int(input("Seed skenario (0=default) [default 0]: ") or "0")
+except Exception:
+    scenario_seed_input = 0
+if scenario_seed_input == 0:
+    scenario_random_pct = 0.0
+else:
+    try:
+        scenario_random_pct = float(input("Persentase episode yang gunakan skenario acak vs default (0-100) [default 50]: ") or "50")
+    except Exception:
+        scenario_random_pct = 50.0
 stats_tracker = StatsTracker(field, FPS, team_left, team_right)
 
 def build_players(team_name: str, side: str) -> List[Dict[str, Any]]:
@@ -550,8 +573,18 @@ def build_players(team_name: str, side: str) -> List[Dict[str, Any]]:
 
 for ep in range(NUM_EPISODES):
     # rebuild players and agents per episode to keep indices/side aligned
-    players = build_players(team_left, "left") + build_players(team_right, "right")
-    stats_tracker.start_episode(players)
+    base_players = build_players(team_left, "left") + build_players(team_right, "right")
+    scenario_info = sample_episode_scenario(
+        base_players,
+        field,
+        team_left,
+        team_right,
+        ep,
+        scenario_seed_input,
+        scenario_random_pct,
+    )
+    players = scenario_info["players"]
+    stats_tracker.start_episode(players, scenario_name=scenario_name, scenario_variant=scenario_variant)
     role_cls = {
         'goalkeeper': DQNGoalkeeperAgent,
         'center back': DQNCenterBackAgent,
@@ -577,6 +610,11 @@ for ep in range(NUM_EPISODES):
     load_team_checkpoint(team_right, agents, "right")
 
     ball = Ball(field_width=field.width, field_height=field.height)
+    # set ball initial pos from scenario
+    if "ball" in scenario_info:
+        bx, by = scenario_info["ball"]
+        ball.x = bx
+        ball.y = by
     recorder = Recorder()
     save_video = False
     if video_mode == "interval":
@@ -598,6 +636,9 @@ for ep in range(NUM_EPISODES):
     old_state = simulator.snapshot()
     total_rewards = [0.0 for _ in agents]
     step_rows: List[Dict[str, Any]] = []
+    scenario_name = scenario_info.get("name", "default")
+    scenario_template = scenario_info.get("template", "default")
+    scenario_variant = scenario_info.get("variant", 0)
 
     # Initialize last_state for each agent
     for ag in agents:
@@ -633,6 +674,9 @@ for ep in range(NUM_EPISODES):
         step_rows.append({
             "episode": ep + 1,
             "step": step + 1,
+            "scenario": scenario_name,
+            "scenario_template": scenario_template,
+            "scenario_variant": scenario_variant,
             "ball_x": new_state.get("ball", {}).get("x", 0.0),
             "ball_y": new_state.get("ball", {}).get("y", 0.0),
             "ball_controller": ball_ctrl if ball_ctrl is not None else -1,
@@ -663,7 +707,8 @@ for ep in range(NUM_EPISODES):
     # tulis step log CSV
     step_path = os.path.join(LOG_STEP_DIR, f"episode_{ep+1}_steps.csv")
     with open(step_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["episode", "step", "ball_x", "ball_y", "ball_controller", "ball_controller_team", "last_goal", "reward_p0", "actions"])
+        writer = csv.DictWriter(f, fieldnames=["episode", "step", "scenario", "scenario_template", "scenario_variant",
+                                               "ball_x", "ball_y", "ball_controller", "ball_controller_team", "last_goal", "reward_p0", "actions"])
         writer.writeheader()
         writer.writerows(step_rows)
     # tulis summary CSV (episode + window)
@@ -672,6 +717,7 @@ for ep in range(NUM_EPISODES):
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "category", "window", "episode", "entity", "team", "role",
+            "scenario", "scenario_variant",
             "possession_pct", "dribbles", "tackles", "blocks",
             "passes", "passes_completed", "pass_accuracy",
             "shots_on", "shots_off", "goals", "clears", "saves",
