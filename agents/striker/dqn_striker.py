@@ -79,9 +79,12 @@ class DQNStriker:
         buffer_size: int = 100_000,
         min_buffer_to_learn: int = 1000,
         target_update_interval: int = 500,
+        target_update_tau: float = 0.01,
         epsilon_start: float = 1.0,
-        epsilon_end: float = 0.05,
-        epsilon_decay_steps: int = 5_000,
+        epsilon_end: float = 0.02,
+        epsilon_decay_steps: int = 20_000,
+        epsilon_warmup_steps: int = 2_000,
+        epsilon_decay_type: str = "cosine",  # "linear" atau "cosine"
         max_move_speed: float = 6.0,
         sprint_multiplier: float = 1.2,
     ):
@@ -96,13 +99,17 @@ class DQNStriker:
         self.buffer = ReplayBuffer(capacity=buffer_size)
         self.min_buffer_to_learn = min_buffer_to_learn
         self.target_update_interval = target_update_interval
+        self.target_update_tau = target_update_tau
         self.train_steps = 0
+        self.global_steps = 0
         self.last_state: Optional[np.ndarray] = None
 
         self.epsilon = epsilon_start
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
         self.epsilon_decay_steps = epsilon_decay_steps
+        self.epsilon_warmup_steps = epsilon_warmup_steps
+        self.epsilon_decay_type = epsilon_decay_type
 
         self.max_move_speed = max_move_speed
         self.sprint_multiplier = sprint_multiplier
@@ -140,6 +147,8 @@ class DQNStriker:
     def select_action(self, snapshot: Dict[str, Any]) -> int:
         state_vec = self.extract_features(snapshot)
         self._actions = self._build_action_space()
+        self.global_steps += 1
+        self._update_epsilon()
         if self.rng.random() < self.epsilon:
             action = int(self.rng.integers(0, self.n_actions))
         else:
@@ -159,7 +168,6 @@ class DQNStriker:
                 kdir = (-kdir[0], kdir[1])
         self._last_action_vel = (mvx, mvy)
         self._last_action_kick = (kpow, kdir)
-        self._decay_epsilon()
         return action
 
     def desired_velocity(self, player, ball, field) -> Tuple[float, float]:
@@ -237,8 +245,7 @@ class DQNStriker:
         self.optimizer.step()
 
         self.train_steps += 1
-        if self.train_steps % self.target_update_interval == 0:
-            self.target_net.load_state_dict(self.policy_net.state_dict())
+        self._update_target_network()
 
         self.last_state = next_state_vec
 
@@ -610,11 +617,26 @@ class DQNStriker:
             "kick_dir": None if kick_dir is None else (float(kick_dir[0]), float(kick_dir[1])),
         }
 
-    def _decay_epsilon(self):
-        if self.epsilon_decay_steps <= 0:
-            self.epsilon = self.epsilon_end
+    def _update_epsilon(self):
+        # warmup: full exploration dulu, lalu decay lin/cosine
+        if self.global_steps < self.epsilon_warmup_steps:
+            self.epsilon = self.epsilon_start
             return
-        self.epsilon = max(
-            self.epsilon_end,
-            self.epsilon_start - (self.train_steps / self.epsilon_decay_steps) * (self.epsilon_start - self.epsilon_end)
-        )
+        progress = (self.global_steps - self.epsilon_warmup_steps) / max(1, self.epsilon_decay_steps)
+        progress = min(1.0, max(0.0, progress))
+        if self.epsilon_decay_type == "cosine":
+            # cosine anneal ke epsilon_end
+            self.epsilon = self.epsilon_end + 0.5 * (self.epsilon_start - self.epsilon_end) * (1 + math.cos(math.pi * progress))
+        else:
+            # linear
+            self.epsilon = self.epsilon_start - progress * (self.epsilon_start - self.epsilon_end)
+        self.epsilon = max(self.epsilon_end, self.epsilon)
+
+    def _update_target_network(self):
+        if self.target_update_tau and self.target_update_tau > 0:
+            tau = self.target_update_tau
+            with torch.no_grad():
+                for target_param, policy_param in zip(self.target_net.parameters(), self.policy_net.parameters()):
+                    target_param.data.mul_(1.0 - tau).add_(tau * policy_param.data)
+        elif self.target_update_interval > 0 and self.train_steps % self.target_update_interval == 0:
+            self.target_net.load_state_dict(self.policy_net.state_dict())

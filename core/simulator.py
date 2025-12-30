@@ -25,6 +25,8 @@ class Simulator:
         self.field = field
         self.recorder = recorder
         self.last_goal = None
+        self.last_goal_scorer = None
+        self.last_touch = None
         self.out_of_bounds = False
         self.offside = False
         self.dt = 1.0 / fps
@@ -34,7 +36,9 @@ class Simulator:
 
     def reset(self):
         self.last_goal = None
+        self.last_goal_scorer = None
         self.out_of_bounds = False
+        self.last_touch = None
         self.ball_controller = None
         for p in self.players:
             # players are dict; ensure basic fields reset if needed
@@ -55,6 +59,8 @@ class Simulator:
             'ball_pos': (self.ball.x, self.ball.y),
             'ball_controller': self.ball_controller,
             'last_goal': self.last_goal,
+            'last_goal_scorer': self.last_goal_scorer,
+            'last_touch': self.last_touch,
             'out_of_bounds': self.out_of_bounds,
             'step': self.step_count,
             'field': {'width': getattr(self.field, 'width', 100.0), 'height': getattr(self.field, 'height', 75.0)}
@@ -77,6 +83,7 @@ class Simulator:
                 tvx, tvy = agent.desired_velocity(p, self.ball, self.field)
                 # gunakan langsung tanpa smoothing agar aksi DQN tidak ditimpa
                 p['vx'], p['vy'] = tvx, tvy
+                self._apply_role_constraints(p, dt)
                 continue
             else:
                 # fallback: gunakan target (tx, ty) atau kejar bola
@@ -97,6 +104,7 @@ class Simulator:
             # smoothing
             p['vx'] += (tvx - p['vx']) * ACCEL_FACTOR * dt
             p['vy'] += (tvy - p['vy']) * ACCEL_FACTOR * dt
+            self._apply_role_constraints(p, dt)
 
     def _update_player_motion(self, dt):
         for p in self.players:
@@ -124,6 +132,17 @@ class Simulator:
             if hasattr(self.ball, 'vx'):
                 self.ball.vx *= 0.985
                 self.ball.vy *= 0.985
+        goal_side = None
+        if hasattr(self.field, "is_goal"):
+            goal_side = self.field.is_goal(self.ball.x, self.ball.y)
+        if goal_side:
+            self.last_goal = goal_side
+            self.last_goal_scorer = self.last_touch
+            self.ball_controller = None
+            if hasattr(self.ball, "vx"):
+                self.ball.vx = 0.0
+                self.ball.vy = 0.0
+            return
         # cek keluar lapangan
         if self.ball.x < 0 or self.ball.x > self.field.width or self.ball.y < 0 or self.ball.y > self.field.height:
             self.out_of_bounds = True
@@ -169,6 +188,7 @@ class Simulator:
                         min_d2 = d2
             if min_idx is not None:
                 self.ball_controller = min_idx
+                self.last_touch = min_idx
 
     def _post_ball_update(self):
         if self.ball.x < 0: self.ball.x = 0
@@ -180,6 +200,111 @@ class Simulator:
         for p in self.players:
             p['x'] = max(0, min(self.field.width, p['x']))
             p['y'] = max(0, min(self.field.height, p['y']))
+
+    def _apply_role_constraints(self, player, dt):
+        role = str(player.get('role', '')).lower()
+        side = player.get('side', 'left')
+        fw, fh = self.field.width, self.field.height
+        home_x = player.get('home_x', fw / 2)
+        home_y = player.get('home_y', fh / 2)
+        dir_sign = 1 if side == 'left' else -1
+        vx = player.get('vx', 0.0)
+        vy = player.get('vy', 0.0)
+        nx = player.get('x', 0.0) + vx * dt
+        ny = player.get('y', 0.0) + vy * dt
+        teammates = [pl for pl in self.players if pl is not player and pl.get('team') == player.get('team')]
+        cover_count = 0
+        for tm in teammates:
+            tx = tm.get('x', 0.0)
+            if (side == 'left' and tx < player.get('x', 0.0)) or (side == 'right' and tx > player.get('x', 0.0)):
+                cover_count += 1
+
+        # Goalkeeper: jaga area gawang, sweep hanya bila bola dekat dan risiko rendah.
+        if 'goalkeeper' in role:
+            x_min, x_max = (0.0, 18.0) if side == 'left' else (fw - 18.0, fw)
+            y_min, y_max = fh * 0.2, fh * 0.8
+            goal_x = 0.0 if side == 'left' else fw
+            ball_d = math.hypot(self.ball.x - player.get('x', 0.0), self.ball.y - player.get('y', 0.0))
+            ball_to_goal = abs(self.ball.x - goal_x)
+            safe_to_sweep = (ball_to_goal < 25.0 and ball_d < 20.0)
+            outward = vx * dir_sign > 0
+            if outward and not safe_to_sweep:
+                vx *= 0.2
+            if nx < x_min or nx > x_max:
+                vx = 0.0
+            if ny < y_min or ny > y_max:
+                vy = 0.0
+            player['vx'], player['vy'] = vx, vy
+            return
+
+        is_defender = ('center back' in role) or ('fullback' in role)
+        if is_defender:
+            adv_line = fw * 0.6 if side == 'left' else fw * 0.4
+            hold_line = fw * 0.52 if side == 'left' else fw * 0.48
+            ball_side_ok = (self.ball.x <= adv_line) if side == 'left' else (self.ball.x >= adv_line)
+            allow_press = ball_side_ok or cover_count >= 1
+            outward = vx * dir_sign > 0
+            if outward and not allow_press and ((side == 'left' and nx > hold_line) or (side == 'right' and nx < hold_line)):
+                vx = 0.0
+            max_y_delta = 18.0
+            if ny > home_y + max_y_delta or ny < home_y - max_y_delta:
+                vy = 0.0
+            if 'fullback' in role:
+                flank_band = 14.0
+                if ny > home_y + flank_band or ny < home_y - flank_band:
+                    vy = 0.0
+                allow_overlap = ((self.ball.x > fw * 0.55 and side == 'left') or (self.ball.x < fw * 0.45 and side == 'right')) and cover_count >= 1
+                overlap_cap = hold_line + 8.0 if side == 'left' else hold_line - 8.0
+                if outward and not allow_overlap and ((side == 'left' and nx > overlap_cap) or (side == 'right' and nx < overlap_cap)):
+                    vx = 0.0
+            player['vx'], player['vy'] = vx, vy
+            return
+
+        if 'winger' in role:
+            flank_band = 14.0
+            if ny > home_y + flank_band or ny < home_y - flank_band:
+                vy = 0.0
+            # tahan terlalu dalam kecuali build dari belakang
+            min_line = fw * 0.38 if side == 'left' else fw * 0.62
+            allow_drop = (self.ball.x < fw * 0.4) if side == 'left' else (self.ball.x > fw * 0.6)
+            retreating = vx * dir_sign < 0
+            if retreating and not allow_drop and ((side == 'left' and nx < min_line) or (side == 'right' and nx > min_line)):
+                vx = 0.0
+            # dorong bila bola sudah maju
+            if not retreating and ((side == 'left' and self.ball.x < fw * 0.45) or (side == 'right' and self.ball.x > fw * 0.55)):
+                vx *= 0.6
+            player['vx'], player['vy'] = vx, vy
+            return
+
+        if 'midfielder' in role:
+            if 'wing' not in role:
+                band_y = 12.0
+                if ny > home_y + band_y or ny < home_y - band_y:
+                    vy = 0.0
+                floor_line = fw * 0.22 if side == 'left' else fw * 0.78
+                if (side == 'left' and nx < floor_line) or (side == 'right' and nx > floor_line):
+                    vx = 0.0
+                # jangan over-commit jika tanpa cover
+                press_line = fw * 0.7 if side == 'left' else fw * 0.3
+                forward = vx * dir_sign > 0
+                if forward and cover_count == 0 and ((side == 'left' and nx > press_line) or (side == 'right' and nx < press_line)):
+                    vx = 0.0
+                player['vx'], player['vy'] = vx, vy
+                return
+
+        if 'striker' in role:
+            band_y = 18.0
+            if ny > home_y + band_y or ny < home_y - band_y:
+                vy = 0.0
+            drop_floor = fw * 0.35 if side == 'left' else fw * 0.65
+            hold_line = fw * 0.48 if side == 'left' else fw * 0.52
+            retreating = vx * dir_sign < 0
+            allow_drop = (self.ball.x < fw * 0.38) if side == 'left' else (self.ball.x > fw * 0.62)
+            if retreating and not allow_drop and ((side == 'left' and nx < hold_line) or (side == 'right' and nx > hold_line)):
+                vx *= 0.3
+            if (side == 'left' and nx < drop_floor) or (side == 'right' and nx > drop_floor):
+                vx = 0.0
+            player['vx'], player['vy'] = vx, vy
 
     def apply_action(self, player, action, dt):
         if not isinstance(action, dict):
@@ -203,6 +328,7 @@ class Simulator:
                 speed = 25.0 * max(0.0, min(1.0, power))
                 self.ball.vx = dx * speed
                 self.ball.vy = dy * speed
+                self.last_touch = idx
                 self.ball_controller = None
 
         t = action.get('type')
@@ -253,33 +379,51 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     team = agent.team.upper()
     side = getattr(agent, "side", "left")
     idx = getattr(agent, "player_index", 0)
+    fw = new_state.get('field', {}).get('width', 100.0) if new_state else 100.0
 
-    # goal reward/penalty
+    def ctrl_team(ctrl, players):
+        if isinstance(ctrl, dict):
+            return ctrl.get("team", None)
+        if isinstance(ctrl, int) and players and 0 <= ctrl < len(players):
+            return players[ctrl].get("team", None)
+        if isinstance(ctrl, str):
+            return ctrl
+        return None
+
+    # goal reward/penalty (lebih besar)
     if simulator.last_goal:
         if simulator.last_goal == 'right':   # menyerang kanan
             r += 1.0 if side == 'left' else -1.0
         elif simulator.last_goal == 'left':  # menyerang kiri
             r += 1.0 if side == 'right' else -1.0
+        r *= 3.0
 
     # possession change
     old_ctrl = old_state.get('ball_controller') if old_state else None
     new_ctrl = new_state.get('ball_controller')
+    old_ctrl_team = ctrl_team(old_ctrl, old_state.get('players') if old_state else [])
+    new_ctrl_team = ctrl_team(new_ctrl, new_state.get('players'))
     if new_ctrl == idx and old_ctrl != idx:
-        r += 0.2
+        r += 0.25
     if old_ctrl == idx and new_ctrl != idx:
-        r -= 0.2
+        r -= 0.25
+    if new_ctrl_team == team and old_ctrl_team != team:
+        r += 0.15  # tim merebut bola
+    if old_ctrl_team == team and new_ctrl_team not in (team, None):
+        r -= 0.2   # tim kehilangan bola
     if new_ctrl == idx:
-        r += 0.02
+        r += 0.03
 
     # progress bola menuju gawang lawan
     old_ball = old_state.get('ball') if old_state else None
     new_ball = new_state.get('ball')
     if old_ball and new_ball:
-        dx = new_ball['x'] - old_ball['x']
-        if side == 'left':
-            r += 0.005 * dx
-        else:
-            r -= 0.005 * dx
+        dx = (new_ball['x'] - old_ball['x'])
+        signed_dx = dx if side == 'left' else -dx
+        progress_gain = 0.003 * signed_dx
+        if new_ctrl_team == team:
+            progress_gain *= 2.5  # lebih berarti jika tim menguasai bola
+        r += progress_gain
 
     # mendekati bola
     players_old = old_state.get('players') if old_state else None
@@ -293,12 +437,28 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
         dist_new = ((pn['x']-bn['x'])**2 + (pn['y']-bn['y'])**2) ** 0.5
         r += 0.01 * (dist_old - dist_new)
 
+    # bola mendekati gawang lawan saat tim menguasai
+    if new_ball:
+        target_x = fw if side == 'left' else 0.0
+        dist_to_goal = abs(target_x - new_ball['x'])
+        goal_prox = max(0.0, 1.0 - dist_to_goal / max(1e-3, fw))
+        if new_ctrl_team == team:
+            r += 0.05 * goal_prox
+
     # waktu
     r -= 0.001
 
     # end conditions penalty/bonus
     if simulator.out_of_bounds:
-        r -= 0.2  # penalti bola keluar
+        r -= 0.3  # penalti bola keluar
     if simulator.offside:
         r -= 0.2  # penalti offside
+
+    # penalti kehilangan bola di sepertiga sendiri
+    if old_ball and old_ctrl_team == team and new_ctrl_team not in (team, None):
+        own_third = fw / 3.0
+        if (side == 'left' and old_ball['x'] < own_third) or (side == 'right' and old_ball['x'] > (fw - own_third)):
+            r -= 0.3
+
+    return r
     return r
