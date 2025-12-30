@@ -1,0 +1,259 @@
+TITLE: 5024201040_Riyan Martin Hidayat_Draft
+
+ABSTRAK
+Penelitian ini mengembangkan simulasi sepak bola 2D berbasis agen dengan pendekatan pembelajaran penguatan (Reinforcement Learning) menggunakan Deep Q-Network (DQN) untuk berbagai peran pemain (goalkeeper, defender, midfielder, striker, winger). Sistem mensimulasikan interaksi multi-agen, pengambilan keputusan taktis, serta evaluasi performa selama episode pelatihan. Tujuan utama adalah menghasilkan kerangka modular yang memungkinkan eksperimen formasi tim, strategi bergerak dengan dan tanpa bola, serta perbandingan pendekatan rule-based dan RL. Hasil awal menunjukkan kerangka mampu merekam aksi, menghitung reward terpisah per agen, menyimpan checkpoint per tim, dan memvisualisasikan dinamika permainan menggunakan Pygame. Draft ini menyajikan latar belakang, tinjauan pustaka terkait agent-based modeling, strategi sepak bola, rule-based decision making, dan RL, desain arsitektur sistem, serta rencana pengujian. Kata kunci: simulasi sepak bola 2D, multi-agent, DQN, reinforcement learning, agent-based modeling.
+
+ABSTRACT
+This study develops a 2D football agent-based simulation using Reinforcement Learning (Deep Q-Network) across player roles (goalkeeper, defenders, midfielders, strikers, wingers). The framework supports tactical decision making, team formations, movement with and without the ball, and compares rule-based versus learned behaviors. Early results show episodic training with reward logging, checkpointing per team side, and Pygame visualization. This draft presents background, literature on agent-based modeling, football tactics, rule-based decision systems, reinforcement learning, system architecture, and planned evaluation. Keywords: 2D football simulation, multi-agent, DQN, reinforcement learning, agent-based modeling.
+
+KATA PENGANTAR
+Penulis menyampaikan terima kasih kepada dosen pembimbing, rekan, dan keluarga atas dukungan. Draft ini masih perlu pematangan metodologi eksperimen dan analisis kuantitatif lanjutan.
+
+DAFTAR ISI
+ABSTRAK
+ABSTRACT
+KATA PENGANTAR
+DAFTAR ISI
+DAFTAR GAMBAR
+DAFTAR TABEL
+1 PENDahuluan
+  1.1 Latar Belakang
+  1.2 Permasalahan
+  1.3 Tujuan
+  1.4 Batasan Masalah
+  1.5 Sistematika Penulisan
+2 TINJAUAN PUSTAKA
+  2.1 Studi Literatur
+  2.2 Strategi dan Taktik dalam Sepak Bola
+    2.2.1 Formasi dan Peran Pemain
+    2.2.2 Pergerakan Pemain: Dengan dan Tanpa Bola
+    2.2.3 Pentingnya Visualisasi dalam Pelatihan Taktik
+  2.3 Agent-Based Modeling (ABM)
+    2.3.1 Definisi dan Karakteristik Agen
+    2.3.2 Penerapan ABM dalam Simulasi Sepak Bola
+    2.3.3 Kelebihan ABM dalam Protek Simulasi
+  2.4 Simulasi Visual 2D dengan Pygame
+    2.4.1 Pygame: Framework Visualisasi Interaktif
+  2.5 Rule-Based Decision Making dalam Simulasi
+    2.5.1 Pengertian Rule-Based System
+    2.5.2 Implementasi dalam Proyek Simulasi
+    2.5.3 Kelebihan dan Keterbatasan Rule-Based Approach
+  2.6 Machine Learning dalam Simulasi Agen
+    2.6.1 Tipe-Tipe Pembelajaran Mesin
+    2.6.2 Reinforcement Learning dalam Simulasi Agen
+  2.7 Kesimpulan Studi Literatur
+3 DESAIN DAN IMPLEMENTASI
+  3.1 Arsitektur Sistem
+    3.1.1 Komponen Utama Sistem
+    3.1.2 Diagram Blok Sistem
+  3.2 Perancangan Agen dan Peran Pemain
+    3.2.1 Struktur Agen
+    3.2.2 Kategori Peran Pemain
+    3.2.3 Modularitas dan Fleksibilitas
+  3.3 Representasi Lapangan dan Bola
+    3.3.1 Representasi Lapangan
+    3.3.2 Representasi Bola
+  3.4 Visualisasi dan Simulasi Gerakan
+    3.4.1 Logika Keputusan (Rule-Based AI)
+  3.5 Skenario Simulasi dan Uji Coba
+4 RENCANA PENGUJIAN DAN ANALISIS
+  4.1 Metodologi Evaluasi
+  4.2 Metrik Performa Agen (Reward, Goal Events)
+  4.3 Analisis Formasi dan Adaptasi Taktik
+  4.4 Perbandingan Rule-Based vs DQN
+  4.5 Evaluasi Konsistensi Checkpoint
+  4.6 Rencana Validasi Tambahan
+5 PENUTUP
+  5.1 Kesimpulan
+  5.2 Saran
+DAFTAR PUSTAKA
+BIOGRAFI PENULIS
+LAMPIRAN
+
+DAFTAR GAMBAR (rencana)
+Gambar 1. Diagram Arsitektur Sistem
+Gambar 2. Diagram Kelas Agen DQN
+Gambar 3. Representasi Koordinat Lapangan
+Gambar 4. Alur Episode Pelatihan
+Gambar 5. Contoh Frame Visualisasi Pygame
+Gambar 6. Perbandingan Reward Rata-Rata per Peran
+Gambar 7. Distribusi Aksi (Policy vs Explorasi)
+Gambar 8. Kurva Konvergensi Loss DQN
+
+DAFTAR TABEL (rencana)
+Tabel 1. Parameter Lapangan dan Simulasi
+Tabel 2. Daftar Peran dan Fitur Input
+Tabel 3. Struktur Jaringan DQN per Peran
+Tabel 4. Konfigurasi Hyperparameter
+Tabel 5. Skema Reward
+Tabel 6. Perbandingan Performa Formasi
+Tabel 7. Rangkuman Checkpoint Episode
+Tabel 8. Evaluasi Rule-Based vs RL
+
+BAB 1 PENDAHULUAN
+1.1 Latar Belakang
+Simulasi sepak bola virtual memerlukan representasi taktis dan adaptasi perilaku pemain. Pendekatan multi-agent reinforcement learning menawarkan fleksibilitas untuk mempelajari strategi dinamis. Proyek ini membangun kerangka 2D yang memadukan formasi, peran khusus, dan evaluasi reward.
+
+1.2 Permasalahan
+a. Bagaimana merancang agen berbeda per peran dengan input lingkungan seragam namun tindakan kontekstual?
+b. Bagaimana membandingkan efektivitas rule-based versus DQN dalam menentukan aksi?
+c. Bagaimana menyimpan dan memulihkan kemajuan pelatihan tim secara terstruktur?
+d. Bagaimana memvisualisasikan dinamika taktik secara real-time?
+
+1.3 Tujuan
+a. Mengembangkan kerangka simulasi sepak bola 2D multi-agent.
+b. Mengimplementasikan DQN untuk setiap peran.
+c. Menyediakan mekanisme checkpoint per tim dan side.
+d. Menyusun sistem logging episode untuk analisis performa.
+
+1.4 Batasan Masalah
+a. Simulasi dalam domain 2D sederhana.
+b. Tidak mencakup kolisi kompleks fisika realistis.
+c. Pembelajaran terbatas pada DQN varian dasar.
+d. Tidak mencakup komunikasi antar agen eksplisit.
+
+1.5 Sistematika Penulisan
+Bab 1 pendahuluan; Bab 2 tinjauan pustaka; Bab 3 desain dan implementasi; Bab 4 rencana pengujian; Bab 5 penutup; diakhiri daftar pustaka dan lampiran.
+
+BAB 2 TINJAUAN PUSTAKA (ringkas)
+2.1 Studi Literatur
+Ringkasan penelitian multi-agent RL dalam olahraga simulatif [1][2].
+
+2.2 Strategi dan Taktik
+Formasi menentukan distribusi ruang; pergerakan tanpa bola krusial membuka jalur umpan.
+
+2.2.1 Formasi dan Peran Pemain
+Formasi A–D menata garis pertahanan, tengah, dan serangan.
+
+2.2.2 Pergerakan Dengan/Tanpa Bola
+Aksi dribble vs positioning defensif memengaruhi reward.
+
+2.2.3 Pentingnya Visualisasi
+Visualisasi membantu debugging perilaku agen dan analisis taktik.
+
+2.3 Agent-Based Modeling
+Agen memiliki state lokal, aksi diskrit, dan adaptasi melalui reward.
+
+2.3.1 Definisi dan Karakteristik
+Otonomi, reaktivitas, pro-aktivitas.
+
+2.3.2 Penerapan dalam Simulasi Sepak Bola
+Memetakan peran ke kelas agen khusus.
+
+2.3.3 Kelebihan
+Eksperimen formasi cepat, modularitas tinggi.
+
+2.4 Simulasi Visual 2D dengan Pygame
+Framework untuk rendering frame per step.
+
+2.4.1 Pygame
+Abstraksi surface, event loop sederhana.
+
+2.5 Rule-Based Decision Making
+Baseline deterministik untuk pembanding RL.
+
+2.5.1 Pengertian
+Serangkaian kondisi-aksi statis.
+
+2.5.2 Implementasi
+Fallback apply_action_compat untuk gerakan dasar.
+
+2.5.3 Kelebihan dan Keterbatasan
+Cepat namun kurang adaptif.
+
+2.6 Machine Learning dalam Simulasi Agen
+Perbandingan supervised vs RL; fokus RL untuk keputusan berurutan.
+
+2.6.1 Tipe Pembelajaran
+Supervised, unsupervised, reinforcement.
+
+2.6.2 Reinforcement Learning
+DQN mempelajari fungsi nilai aksi dari pengalaman episodik.
+
+2.7 Kesimpulan Studi Literatur
+Kebutuhan kerangka adaptif mendorong penggunaan RL multi-agent.
+
+BAB 3 DESAIN DAN IMPLEMENTASI (ringkas)
+3.1 Arsitektur Sistem
+Komponen: Field, Ball, Agents, Simulator, Renderer, Recorder, VideoExporter, Checkpoint Manager.
+
+3.1.1 Komponen Utama
+Simulator mengorkestrasi step, reward, dan termination.
+
+3.1.2 Diagram Blok
+(Placeholder untuk diagram interaksi modul).
+
+3.2 Perancangan Agen
+Setiap peran memetakan indeks pemain dan seed; policy_net dan target_net sinkron pada load checkpoint.
+
+3.2.1 Struktur Agen
+Fungsi: extract_features, select_action, learn.
+
+3.2.2 Kategori Peran
+Peran defensif vs ofensif memengaruhi target posisi.
+
+3.2.3 Modularitas
+role_cls dictionary memetakan string ke kelas.
+
+3.3 Representasi Lingkungan
+Field: width=100, height=75; bola dengan posisi dan kecepatan.
+
+3.3.1 Lapangan
+Koordinat kartesian sederhana.
+
+3.3.2 Bola
+Memiliki vx, vy; update setiap step.
+
+3.4 Visualisasi Gerakan
+PygameRenderer menghasilkan frame; VideoExporter menyimpan mp4.
+
+3.4.1 Logika Keputusan
+DQN menghasilkan action_idx diterjemahkan ke kamus aksi (move_vx, move_vy, kick).
+
+3.5 Skenario Simulasi
+Episode berdurasi DURATION_STEPS dengan FPS tetap; termination saat goal/out/offside.
+
+BAB 4 RENCANA PENGUJIAN DAN ANALISIS (ringkas)
+4.1 Metodologi
+Bandingkan rata-rata reward per peran antar formasi.
+
+4.2 Metrik
+Total reward, jumlah tendangan efektif, jarak rata-rata ke bola, event goal.
+
+4.3 Analisis Formasi
+Evaluasi formasi A–D pada kestabilan posisi dan peluang serangan.
+
+4.4 Rule-Based vs DQN
+Ukur peningkatan reward kumulatif dan adaptasi terhadap dinamika bola.
+
+4.5 Checkpoint
+Validasi pemulihan state_dict konsisten antar episode.
+
+4.6 Validasi Tambahan
+Stress test dengan peningkatan jumlah episode dan variasi seed.
+
+BAB 5 PENUTUP (ringkas)
+5.1 Kesimpulan
+Kerangka siap untuk eksperimen multi-agent taktis; modul checkpoint dan logging berfungsi.
+
+5.2 Saran
+Perlu evaluasi kolaboratif antar agen, integrasi komunikasi, dan algoritma RL lanjutan (PPO, QMIX).
+
+DAFTAR PUSTAKA (contoh placeholder)
+[1] Sutton & Barto. Reinforcement Learning: An Introduction.
+[2] Busoniu et al. Multi-Agent Reinforcement Learning Survey.
+[3] Russell & Norvig. Artificial Intelligence: A Modern Approach.
+[4] Documentation Pygame.
+[5] Mnih et al. DQN Nature Paper.
+
+BIOGRAFI PENULIS
+Penulis adalah mahasiswa yang meneliti simulasi multi-agent dan pembelajaran penguatan.
+
+LAMPIRAN
+A. Potongan kode utama (main.py)
+B. Struktur direktori checkpoints
+C. Contoh log episode
+D. Tabel parameter hyperparameter
+E. Rencana jadwal eksperimen lanjut
+
+END OF DRAFT
