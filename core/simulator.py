@@ -205,8 +205,10 @@ class Simulator:
         role = str(player.get('role', '')).lower()
         side = player.get('side', 'left')
         fw, fh = self.field.width, self.field.height
-        home_x = player.get('home_x', fw / 2)
-        home_y = player.get('home_y', fh / 2)
+        home_x_base = player.get('base_home_x', player.get('home_x', fw / 2))
+        home_y_base = player.get('base_home_y', player.get('home_y', fh / 2))
+        home_x = home_x_base
+        home_y = home_y_base
         dir_sign = 1 if side == 'left' else -1
         vx = player.get('vx', 0.0)
         vy = player.get('vy', 0.0)

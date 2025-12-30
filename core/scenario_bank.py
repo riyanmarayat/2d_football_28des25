@@ -20,8 +20,6 @@ def _move_group(players: List[Dict[str, Any]], indices: List[int], cx: float, cy
         py = cy + rng.uniform(-spread_y, spread_y)
         players[idx]["x"] = px
         players[idx]["y"] = py
-        players[idx]["home_x"] = px
-        players[idx]["home_y"] = py
 
 
 def _indices_by_role(players: List[Dict[str, Any]], team: str, role_keywords: List[str]) -> List[int]:

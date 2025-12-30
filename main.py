@@ -568,7 +568,7 @@ def build_players(team_name: str, side: str) -> List[Dict[str, Any]]:
     for role, (x, y) in base_positions:
         px = x if side == "left" else field.width - x
         tpl.append({"team": team_name, "role": role, "x": px, "y": y, "vx": 0.0, "vy": 0.0, "side": side,
-                    "home_x": px, "home_y": y})
+                    "home_x": px, "home_y": y, "base_home_x": px, "base_home_y": y})
     return tpl
 
 for ep in range(NUM_EPISODES):
@@ -583,6 +583,9 @@ for ep in range(NUM_EPISODES):
         scenario_seed_input,
         scenario_random_pct,
     )
+    scenario_name = scenario_info.get("name", "default")
+    scenario_template = scenario_info.get("template", "default")
+    scenario_variant = scenario_info.get("variant", 0)
     players = scenario_info["players"]
     stats_tracker.start_episode(players, scenario_name=scenario_name, scenario_variant=scenario_variant)
     role_cls = {
@@ -636,9 +639,6 @@ for ep in range(NUM_EPISODES):
     old_state = simulator.snapshot()
     total_rewards = [0.0 for _ in agents]
     step_rows: List[Dict[str, Any]] = []
-    scenario_name = scenario_info.get("name", "default")
-    scenario_template = scenario_info.get("template", "default")
-    scenario_variant = scenario_info.get("variant", 0)
 
     # Initialize last_state for each agent
     for ag in agents:
