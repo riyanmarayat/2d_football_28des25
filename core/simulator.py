@@ -15,6 +15,8 @@ MAX_SPEED = 6.0
 SUBSTEPS = 2
 BLOCK_RADIUS = 1.2
 BLOCK_REFLECT = 0.4
+BALL_DRAG_PER_SEC = 0.45    # ~0.64 speed left after 1s if not touched
+BALL_RESTITUTION = 0.55     # pantulan saat mengenai garis lapangan
 
 class Simulator:
     def __init__(self, agents, players, ball, field, recorder, fps=1):
@@ -126,26 +128,51 @@ class Simulator:
             self.ball.y = pc['y'] + ny * DRIBBLE_OFFSET
             self.ball.vx = pc['vx']
             self.ball.vy = pc['vy']
+            goal_side = self.field.is_goal(self.ball.x, self.ball.y) if hasattr(self.field, "is_goal") else None
+            if goal_side:
+                self.last_goal = goal_side
+                self.last_goal_scorer = self.last_touch
+                self.ball_controller = None
+                if hasattr(self.ball, "vx"):
+                    self.ball.vx = 0.0
+                    self.ball.vy = 0.0
+                return
         else:
-            self.ball.x += getattr(self.ball, 'vx', 0.0) * dt
-            self.ball.y += getattr(self.ball, 'vy', 0.0) * dt
+            # integrasi bola bebas dengan drag dt-invariant dan pantulan garis
+            vx = getattr(self.ball, 'vx', 0.0)
+            vy = getattr(self.ball, 'vy', 0.0)
+            self.ball.x += vx * dt
+            self.ball.y += vy * dt
+            drag = math.exp(-BALL_DRAG_PER_SEC * dt)
             if hasattr(self.ball, 'vx'):
-                self.ball.vx *= 0.985
-                self.ball.vy *= 0.985
-        goal_side = None
-        if hasattr(self.field, "is_goal"):
-            goal_side = self.field.is_goal(self.ball.x, self.ball.y)
-        if goal_side:
-            self.last_goal = goal_side
-            self.last_goal_scorer = self.last_touch
-            self.ball_controller = None
-            if hasattr(self.ball, "vx"):
-                self.ball.vx = 0.0
-                self.ball.vy = 0.0
-            return
-        # cek keluar lapangan
-        if self.ball.x < 0 or self.ball.x > self.field.width or self.ball.y < 0 or self.ball.y > self.field.height:
-            self.out_of_bounds = True
+                self.ball.vx *= drag
+                self.ball.vy *= drag
+            # pantulan dinding lapangan (kecuali lewat mulut gawang)
+            radius = getattr(self.ball, 'radius', 0.11)
+            # cek goal terlebih dahulu
+            goal_side = self.field.is_goal(self.ball.x, self.ball.y) if hasattr(self.field, "is_goal") else None
+            if goal_side:
+                self.last_goal = goal_side
+                self.last_goal_scorer = self.last_touch
+                self.ball_controller = None
+                if hasattr(self.ball, "vx"):
+                    self.ball.vx = 0.0
+                    self.ball.vy = 0.0
+                return
+            # pantul vertikal (atas/bawah)
+            if self.ball.y < radius:
+                self.ball.y = radius
+                self.ball.vy = abs(self.ball.vy) * BALL_RESTITUTION
+            elif self.ball.y > self.field.height - radius:
+                self.ball.y = self.field.height - radius
+                self.ball.vy = -abs(self.ball.vy) * BALL_RESTITUTION
+            # pantul horizontal (kiri/kanan) jika bukan gawang
+            if self.ball.x < radius:
+                self.ball.x = radius
+                self.ball.vx = abs(self.ball.vx) * BALL_RESTITUTION
+            elif self.ball.x > self.field.width - radius:
+                self.ball.x = self.field.width - radius
+                self.ball.vx = -abs(self.ball.vx) * BALL_RESTITUTION
         # peluang blok bola oleh pemain lain (tanpa kontrol)
         if self.ball_controller is None:
             for i, p in enumerate(self.players):
@@ -191,10 +218,8 @@ class Simulator:
                 self.last_touch = min_idx
 
     def _post_ball_update(self):
-        if self.ball.x < 0: self.ball.x = 0
-        if self.ball.x > self.field.width: self.ball.x = self.field.width
-        if self.ball.y < 0: self.ball.y = 0
-        if self.ball.y > self.field.height: self.ball.y = self.field.height
+        # tidak lagi clamp keras; pantulan ditangani di _update_ball
+        pass
 
     def _clamp_players(self):
         for p in self.players:
@@ -382,6 +407,7 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     side = getattr(agent, "side", "left")
     idx = getattr(agent, "player_index", 0)
     fw = new_state.get('field', {}).get('width', 100.0) if new_state else 100.0
+    fh = new_state.get('field', {}).get('height', 75.0) if new_state else 75.0
 
     def ctrl_team(ctrl, players):
         if isinstance(ctrl, dict):
@@ -398,15 +424,38 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     is_mid = "midfielder" in role and not is_def
     is_wing = "winger" in role
     is_striker = "striker" in role and not is_wing
+    role_key = (
+        "gk" if is_gk else
+        "def" if is_def else
+        "wing" if is_wing else
+        "striker" if is_striker else
+        "mid"
+    )
+
+    role_goal_scale = {"gk": 5.0, "def": 4.5, "mid": 3.4, "wing": 4.0, "striker": 4.2}
+    team_gain_scale = {"gk": 1.6, "def": 1.5, "mid": 1.1, "wing": 1.2, "striker": 1.25}
+    team_loss_scale = {"gk": 1.6, "def": 1.45, "mid": 1.1, "wing": 1.0, "striker": 1.0}
+    player_gain_scale = {"gk": 1.2, "def": 1.1, "mid": 1.0, "wing": 1.05, "striker": 1.1}
+    player_loss_scale = {"gk": 1.2, "def": 1.1, "mid": 1.0, "wing": 1.0, "striker": 1.0}
+    progress_scale = {"gk": 0.35, "def": 0.55, "mid": 1.0, "wing": 1.3, "striker": 1.45}
+    goal_prox_scale = {"gk": 0.6, "def": 0.75, "mid": 1.0, "wing": 1.25, "striker": 1.35}
+    own_third_loss_scale = {"gk": 1.4, "def": 1.35, "mid": 1.1, "wing": 1.0, "striker": 1.0}
+
+    own_goal_x = 0.0 if side == 'left' else fw
+    own_goal_y = fh / 2.0
+
+    def scale(table, default=1.0):
+        return table.get(role_key, default)
 
     # goal reward/penalty (lebih besar, bobot per role)
     if simulator.last_goal:
+        outcome = 0.0
         if simulator.last_goal == 'right':   # menyerang kanan
-            r += 1.0 if side == 'left' else -1.0
+            outcome = 1.0 if side == 'left' else -1.0
         elif simulator.last_goal == 'left':  # menyerang kiri
-            r += 1.0 if side == 'right' else -1.0
-        goal_factor = 3.5 if (is_striker or is_wing) else (4.5 if is_gk or is_def else 3.0)
-        r *= goal_factor
+            outcome = 1.0 if side == 'right' else -1.0
+        if outcome != 0.0:
+            r += outcome * scale(role_goal_scale, 3.5)
 
     # possession change
     old_ctrl = old_state.get('ball_controller') if old_state else None
@@ -414,18 +463,14 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     old_ctrl_team = ctrl_team(old_ctrl, old_state.get('players') if old_state else [])
     new_ctrl_team = ctrl_team(new_ctrl, new_state.get('players'))
     if new_ctrl == idx and old_ctrl != idx:
-        r += 0.25
+        r += 0.25 * scale(player_gain_scale, 1.0)
     if old_ctrl == idx and new_ctrl != idx:
-        r -= 0.25
+        r -= 0.25 * scale(player_loss_scale, 1.0)
     if new_ctrl_team == team and old_ctrl_team != team:
-        bonus = 0.15
-        if is_gk or is_def:
-            bonus *= 1.4
+        bonus = 0.15 * scale(team_gain_scale, 1.0)
         r += bonus  # tim merebut bola
     if old_ctrl_team == team and new_ctrl_team not in (team, None):
-        penalty = 0.2
-        if is_gk or is_def:
-            penalty *= 1.3
+        penalty = 0.2 * scale(team_loss_scale, 1.0)
         r -= penalty   # tim kehilangan bola
     if new_ctrl == idx:
         r += 0.03
@@ -436,13 +481,9 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     if old_ball and new_ball:
         dx = (new_ball['x'] - old_ball['x'])
         signed_dx = dx if side == 'left' else -dx
-        progress_gain = 0.003 * signed_dx
+        progress_gain = 0.003 * signed_dx * scale(progress_scale, 1.0)
         if new_ctrl_team == team:
-            progress_gain *= 2.5
-        if is_striker or is_wing:
-            progress_gain *= 1.4
-        elif is_gk or is_def:
-            progress_gain *= 0.7
+            progress_gain *= 2.2
         r += progress_gain
 
     # mendekati bola
@@ -463,15 +504,11 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
         dist_to_goal = abs(target_x - new_ball['x'])
         goal_prox = max(0.0, 1.0 - dist_to_goal / max(1e-3, fw))
         if new_ctrl_team == team:
-            prox_bonus = 0.05 * goal_prox
-            if is_striker or is_wing:
-                prox_bonus *= 1.5
-            elif is_gk or is_def:
-                prox_bonus *= 0.6
+            prox_bonus = 0.05 * goal_prox * scale(goal_prox_scale, 1.0)
             r += prox_bonus
 
     # waktu
-    r -= 0.001
+    r -= 0.0008
 
     # end conditions penalty/bonus
     if simulator.out_of_bounds:
@@ -483,9 +520,26 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     if old_ball and old_ctrl_team == team and new_ctrl_team not in (team, None):
         own_third = fw / 3.0
         if (side == 'left' and old_ball['x'] < own_third) or (side == 'right' and old_ball['x'] > (fw - own_third)):
-            loss_pen = 0.3
-            if is_gk or is_def:
-                loss_pen *= 1.3
+            loss_pen = 0.3 * scale(own_third_loss_scale, 1.0)
             r -= loss_pen
+
+    # Event-based heuristik per role
+    if new_ball:
+        goal_dist = math.hypot(new_ball['x'] - own_goal_x, new_ball['y'] - own_goal_y)
+        own_third = fw / 3.0
+        in_own_third = (side == 'left' and new_ball['x'] < own_third) or (side == 'right' and new_ball['x'] > (fw - own_third))
+        # GK: tangkap/kuasai bola di sekitar gawang
+        if is_gk and new_ctrl == idx and goal_dist < 12.0:
+            r += 0.6
+        # Def/GK: merebut bola di area sendiri
+        if (is_gk or is_def) and new_ctrl == idx and old_ctrl_team not in (team, None) and in_own_third:
+            r += 0.3
+        # Penalty jika lawan kuasai bola di kotak dekat gawang
+        if (is_gk or is_def) and new_ctrl_team not in (team, None) and goal_dist < 12.0:
+            r -= 0.35
+        # Clear dari area sendiri (kick power > 0)
+        if (is_gk or is_def) and old_ctrl == idx and in_own_third:
+            if isinstance(action, dict) and float(action.get("kick_power", 0.0) or 0.0) > 0.0:
+                r += 0.22
 
     return r

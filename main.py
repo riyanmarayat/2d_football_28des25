@@ -316,11 +316,17 @@ class StatsTracker:
         kdir = action.get("kick_dir")
         if power <= 0.0 or not kdir:
             return None
+        # Hanya anggap shot bila posisi sudah cukup maju dan tenaga memadai
+        side = player.get("side", "left")
+        x_pos = float(player.get("x", 0.0))
+        field_w = float(self.field.width)
+        attacking_third = (x_pos > field_w * 0.55) if side == "left" else (x_pos < field_w * 0.45)
+        if (not attacking_third) and power < 0.5:
+            return None
         dir_x, dir_y = float(kdir[0]), float(kdir[1])
         dir_norm = math.hypot(dir_x, dir_y)
         if dir_norm < 1e-6:
             return None
-        side = player.get("side", "left")
         goal_x = self.field.width if side == "left" else 0.0
         goal_vec_x = goal_x - float(player.get("x", 0.0))
         goal_vec_y = (self.field.height / 2) - float(player.get("y", 0.0))
@@ -328,7 +334,11 @@ class StatsTracker:
         if goal_norm < 1e-6:
             return None
         cos_theta = (dir_x * goal_vec_x + dir_y * goal_vec_y) / (dir_norm * goal_norm + 1e-6)
-        if cos_theta < 0.7:
+        # Sudut harus benar-benar ke gawang untuk dianggap shot
+        if cos_theta < 0.8:
+            return None
+        # Jika masih jauh dari gawang dan power rendah, anggap bukan shot
+        if goal_norm > field_w * 0.5 and power < 0.35:
             return None
         t = (goal_x - float(player.get("x", 0.0))) / dir_x if abs(dir_x) > 1e-6 else None
         if t is None or t <= 0:
