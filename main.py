@@ -571,8 +571,33 @@ def build_players(team_name: str, side: str) -> List[Dict[str, Any]]:
                     "home_x": px, "home_y": y, "base_home_x": px, "base_home_y": y})
     return tpl
 
+# Persist agents across episodes supaya replay/epsilon tidak reset terus.
+base_players_init = build_players(team_left, "left") + build_players(team_right, "right")
+role_cls = {
+    'goalkeeper': DQNGoalkeeperAgent,
+    'center back': DQNCenterBackAgent,
+    'right fullback': DQNRightFullbackAgent,
+    'left fullback': DQNLeftFullbackAgent,
+    'central midfielder': DQNCentralMidfielderAgent,
+    'right midfielder': DQNRightMidfielderAgent,
+    'left midfielder': DQNLeftMidfielderAgent,
+    'right winger': DQNRightWingerAgent,
+    'left winger': DQNLeftWingerAgent,
+    'striker': DQNStriker,
+}
+agents = []
+for idx, p in enumerate(base_players_init):
+    role = p['role'].lower()
+    team = p['team']
+    side = p.get("side", "left")
+    cls = role_cls.get(role, DQNCentralMidfielderAgent)
+    agents.append(cls(team=team, player_index=idx, side=side, seed=idx, role_name=role))
+# Load checkpoints sekali di awal (akan overwrite jika ada)
+load_team_checkpoint(team_left, agents, "left")
+load_team_checkpoint(team_right, agents, "right")
+
 for ep in range(NUM_EPISODES):
-    # rebuild players and agents per episode to keep indices/side aligned
+    # rebuild players per episode, reuse agents (index/order consistent)
     base_players = build_players(team_left, "left") + build_players(team_right, "right")
     scenario_info = sample_episode_scenario(
         base_players,
@@ -588,29 +613,6 @@ for ep in range(NUM_EPISODES):
     scenario_variant = scenario_info.get("variant", 0)
     players = scenario_info["players"]
     stats_tracker.start_episode(players, scenario_name=scenario_name, scenario_variant=scenario_variant)
-    role_cls = {
-        'goalkeeper': DQNGoalkeeperAgent,
-        'center back': DQNCenterBackAgent,
-        'right fullback': DQNRightFullbackAgent,
-        'left fullback': DQNLeftFullbackAgent,
-        'central midfielder': DQNCentralMidfielderAgent,
-        'right midfielder': DQNRightMidfielderAgent,
-        'left midfielder': DQNLeftMidfielderAgent,
-        'right winger': DQNRightWingerAgent,
-        'left winger': DQNLeftWingerAgent,
-        'striker': DQNStriker,
-    }
-    agents = []
-    for idx, p in enumerate(players):
-        role = p['role'].lower()
-        team = p['team']
-        side = p.get("side", "left")
-        cls = role_cls.get(role, DQNCentralMidfielderAgent)
-        agents.append(cls(team=team, player_index=idx, side=side, seed=idx + ep * 100))
-
-    # Load checkpoints untuk sisi kiri/kanan jika ada
-    load_team_checkpoint(team_left, agents, "left")
-    load_team_checkpoint(team_right, agents, "right")
 
     ball = Ball(field_width=field.width, field_height=field.height)
     # set ball initial pos from scenario

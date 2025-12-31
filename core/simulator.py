@@ -392,13 +392,21 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
             return ctrl
         return None
 
-    # goal reward/penalty (lebih besar)
+    role = getattr(agent, "role_name", "").lower()
+    is_gk = "goalkeeper" in role
+    is_def = any(k in role for k in ["back", "fullback"])
+    is_mid = "midfielder" in role and not is_def
+    is_wing = "winger" in role
+    is_striker = "striker" in role and not is_wing
+
+    # goal reward/penalty (lebih besar, bobot per role)
     if simulator.last_goal:
         if simulator.last_goal == 'right':   # menyerang kanan
             r += 1.0 if side == 'left' else -1.0
         elif simulator.last_goal == 'left':  # menyerang kiri
             r += 1.0 if side == 'right' else -1.0
-        r *= 3.0
+        goal_factor = 3.5 if (is_striker or is_wing) else (4.5 if is_gk or is_def else 3.0)
+        r *= goal_factor
 
     # possession change
     old_ctrl = old_state.get('ball_controller') if old_state else None
@@ -410,9 +418,15 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     if old_ctrl == idx and new_ctrl != idx:
         r -= 0.25
     if new_ctrl_team == team and old_ctrl_team != team:
-        r += 0.15  # tim merebut bola
+        bonus = 0.15
+        if is_gk or is_def:
+            bonus *= 1.4
+        r += bonus  # tim merebut bola
     if old_ctrl_team == team and new_ctrl_team not in (team, None):
-        r -= 0.2   # tim kehilangan bola
+        penalty = 0.2
+        if is_gk or is_def:
+            penalty *= 1.3
+        r -= penalty   # tim kehilangan bola
     if new_ctrl == idx:
         r += 0.03
 
@@ -424,7 +438,11 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
         signed_dx = dx if side == 'left' else -dx
         progress_gain = 0.003 * signed_dx
         if new_ctrl_team == team:
-            progress_gain *= 2.5  # lebih berarti jika tim menguasai bola
+            progress_gain *= 2.5
+        if is_striker or is_wing:
+            progress_gain *= 1.4
+        elif is_gk or is_def:
+            progress_gain *= 0.7
         r += progress_gain
 
     # mendekati bola
@@ -445,7 +463,12 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
         dist_to_goal = abs(target_x - new_ball['x'])
         goal_prox = max(0.0, 1.0 - dist_to_goal / max(1e-3, fw))
         if new_ctrl_team == team:
-            r += 0.05 * goal_prox
+            prox_bonus = 0.05 * goal_prox
+            if is_striker or is_wing:
+                prox_bonus *= 1.5
+            elif is_gk or is_def:
+                prox_bonus *= 0.6
+            r += prox_bonus
 
     # waktu
     r -= 0.001
@@ -456,11 +479,13 @@ def compute_agent_reward(simulator, agent, old_state, new_state, action):
     if simulator.offside:
         r -= 0.2  # penalti offside
 
-    # penalti kehilangan bola di sepertiga sendiri
+    # penalti kehilangan bola di sepertiga sendiri (lebih berat untuk GK/def)
     if old_ball and old_ctrl_team == team and new_ctrl_team not in (team, None):
         own_third = fw / 3.0
         if (side == 'left' and old_ball['x'] < own_third) or (side == 'right' and old_ball['x'] > (fw - own_third)):
-            r -= 0.3
+            loss_pen = 0.3
+            if is_gk or is_def:
+                loss_pen *= 1.3
+            r -= loss_pen
 
-    return r
     return r

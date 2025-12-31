@@ -57,6 +57,20 @@ class ReplayBuffer:
         return len(self.buffer)
 
 
+ROLE_LIST = [
+    "goalkeeper",
+    "center back",
+    "right fullback",
+    "left fullback",
+    "central midfielder",
+    "right midfielder",
+    "left midfielder",
+    "right winger",
+    "left winger",
+    "striker",
+]
+
+
 class DQNStriker:
     """
     DQN agent dengan observasi egosentris (B di-mirror ke kiri) dan action set 24 aksi balanced
@@ -71,7 +85,7 @@ class DQNStriker:
         seed: Optional[int] = 42,
         player_index: int = 0,
         side: str = "left",  # "left" atau "right" di lapangan
-        state_dim: int = 60,
+        state_dim: int = 70,  # fitur dasar + role one-hot (10)
         n_actions: int = ACTION_COUNT,
         gamma: float = 0.99,
         lr: float = 1e-3,
@@ -87,10 +101,12 @@ class DQNStriker:
         epsilon_decay_type: str = "cosine",  # "linear" atau "cosine"
         max_move_speed: float = 6.0,
         sprint_multiplier: float = 1.2,
+        role_name: Optional[str] = None,
     ):
         self.team = team.upper()
         self.player_index = player_index
         self.side = side.lower()
+        self.role_name = (role_name or "").lower()
         self.rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
         self.state_dim = state_dim
         self.n_actions = n_actions
@@ -209,7 +225,7 @@ class DQNStriker:
 
     def action_index_to_dict(self, action_idx: int) -> Dict[str, Any]:
         base = dict(self._actions[action_idx])
-        if self.team == "B":
+        if self.side == "right":
             base["move_vx"] = -base.get("move_vx", 0.0)
             if base.get("kick_dir") is not None:
                 kx, ky = base["kick_dir"]
@@ -219,8 +235,11 @@ class DQNStriker:
     def learn(self, reward: float, next_snapshot: Dict[str, Any], done: bool):
         if self.last_state is None or self.last_action_idx is None:
             return
+        # penting: simpan state sebelumnya sebelum extract_features() menimpa self.last_state
+        prev_state_vec = np.array(self.last_state, copy=True)
+        prev_action_idx = int(self.last_action_idx)
         next_state_vec = self.extract_features(next_snapshot)
-        self.buffer.push(self.last_state, self.last_action_idx, reward, next_state_vec, done)
+        self.buffer.push(prev_state_vec, prev_action_idx, reward, next_state_vec, done)
         if len(self.buffer) < self.min_buffer_to_learn:
             self.last_state = next_state_vec
             return
@@ -336,7 +355,15 @@ class DQNStriker:
         bc_tm = 1.0 if (ctrl_team == self.team and ctrl_idx != idx) else 0.0
         bc_op = 1.0 if (ctrl_team is not None and ctrl_team != self.team) else 0.0
 
-        opp_team = "B" if self.team == "A" else "A"
+        # generalisasi lawan: jika bukan A, asumsikan tim lain selain self.team adalah opponent
+        opp_team = None
+        teams_present = {p.get("team", "").upper() for p in players}
+        for t in teams_present:
+            if t and t != self.team:
+                opp_team = t
+                break
+        if opp_team is None:
+            opp_team = "B" if self.team == "A" else "A"
         nearest_opp = (0.0, 0.0, 1e9)
         opp_count_r10 = 0
         mean_opp_x = 0.0
@@ -441,6 +468,10 @@ class DQNStriker:
         pressing_intensity = opp_count_r10_norm
         time_frac = min(1.0, step / max_steps)
 
+        role_onehot = np.zeros(len(ROLE_LIST), dtype=np.float32)
+        if self.role_name in ROLE_LIST:
+            role_onehot[ROLE_LIST.index(self.role_name)] = 1.0
+
         feat = np.array([
             norm(sx_raw, field_w), norm(sy_raw, field_h),
             norm(ball_dx, field_w), norm(ball_dy, field_h),
@@ -461,6 +492,7 @@ class DQNStriker:
             off_ball_run_viable,
             time_frac,
             *self._last_action_one_hot.tolist(),
+            *role_onehot.tolist(),
         ], dtype=np.float32)
 
         self.last_state = feat
@@ -486,7 +518,6 @@ class DQNStriker:
         fh = e["field_h"]
         best_tm_world = e.get("best_tm_world")
         players = e.get("players", [])
-        opp_team = e.get("opp_team")
         home_x, home_y = e.get("home_pos", (sx, sy))
         actions: List[Dict[str, Any]] = []
 
@@ -496,36 +527,70 @@ class DQNStriker:
                 return 0.0, 0.0
             return dx / nd * speed, dy / nd * speed
 
-        def mirror_pos(x, y):
-            if self.team == "A":
-                return x, y
-            return fw - x, y
+        def aim(target_x, target_y, power):
+            dx, dy = target_x - sx, target_y - sy
+            mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+            return self._make_action(0.0, 0.0, power, (dx / mag, dy / mag))
 
-        # 0 idle
+        def add_moves(speed_scale=1.0):
+            dirs = [
+                (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)
+            ]
+            for dx, dy in dirs:
+                vx, vy = mv(dx, dy, self.max_move_speed * speed_scale)
+                actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # Baseline: idle
         actions.append(self._make_action(0.0, 0.0, 0.0, None))
 
-        # 1-8 moves (N,NE,E,SE,S,SW,W,NW) dalam frame ego
-        dirs = [
-            (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)
-        ]
-        for dx, dy in dirs:
-            vx, vy = mv(dx, dy, self.max_move_speed)
-            actions.append(self._make_action(vx, vy, 0.0, None))
+        role = self.role_name
+        is_gk = "goalkeeper" in role
+        is_def = any(k in role for k in ["back", "fullback"])
+        is_mid = any(k in role for k in ["midfielder"])
+        is_wing = any(k in role for k in ["winger"])
+        is_striker = "striker" in role and not is_wing
 
-        # 9 sprint forward (ke gawang lawan)
-        vx, vy = mv(gx - sx, gy - sy, self.max_move_speed * self.sprint_multiplier)
+        # Movement set
+        add_moves(speed_scale=1.0)
+
+        # Control / chase ball
+        vx, vy = mv(bx - sx, by - sy, self.max_move_speed * (1.2 if is_def or is_gk else 0.9))
         actions.append(self._make_action(vx, vy, 0.0, None))
 
-        # 10 control ball (mendekati bola)
-        vx, vy = mv(bx - sx, by - sy, self.max_move_speed * 0.6)
+        # Home shape
+        hx, hy = home_x, home_y
+        vx, vy = mv(hx - sx, hy - sy, self.max_move_speed * 0.85)
         actions.append(self._make_action(vx, vy, 0.0, None))
 
-        # 11 dribble toward goal + lateral noise
-        lat = self.rng.uniform(-0.3, 0.3)
-        vx, vy = mv((gx - sx) + lat, (gy - sy) + lat, self.max_move_speed * 0.8)
+        # Press / tackle
+        vx, vy = mv(bx - sx, by - sy, self.max_move_speed * (1.3 if is_def or is_gk else 1.05))
         actions.append(self._make_action(vx, vy, 0.0, None))
 
-        # 12 pass short
+        # Block lane (ball -> goal midpoint)
+        midx, midy = (bx + gx) / 2, (by + gy) / 2
+        vx, vy = mv(midx - sx, midy - sy, self.max_move_speed * (1.0 if is_def or is_gk else 0.9))
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # Support pocket (depan bola + offset samping)
+        support_x = min(fw, bx + 6.0)
+        offset_y = 6.0 if sy < by else -6.0
+        support_y = max(0.0, min(fh, by + offset_y))
+        vx, vy = mv(support_x - sx, support_y - sy, self.max_move_speed * 0.95)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # Half-space runs (akan di-skip utk GK)
+        if not is_gk:
+            tgt_x = fw * 0.92
+            actions.append(self._make_action(*mv(tgt_x - sx, fh * 0.28 - sy, self.max_move_speed), 0.0, None))
+            actions.append(self._make_action(*mv(tgt_x - sx, fh * 0.72 - sy, self.max_move_speed), 0.0, None))
+        else:
+            # GK: return-to-goal variants
+            goal_x = 0.0 if self.side == "left" else fw
+            actions.append(self._make_action(*mv(goal_x - sx, fh * 0.5 - sy, self.max_move_speed * 0.9), 0.0, None))
+            actions.append(self._make_action(*mv(goal_x - sx, fh * 0.35 - sy, self.max_move_speed * 0.9), 0.0, None))
+
+        # Passing / shooting set per role
+        # Short pass (best teammate)
         if best_tm_world is not None:
             txw, tyw = best_tm_world
             tx, ty = (txw if self.team == "A" else fw - txw), tyw
@@ -535,77 +600,62 @@ class DQNStriker:
         else:
             actions.append(self._make_action(0.0, 0.0, 0.0, None))
 
-        # 13 through pass (lead forward)
-        if best_tm_world is not None:
-            txw, tyw = best_tm_world
-            lead_xw = txw + 4.0
-            tx, ty = (lead_xw if self.team == "A" else fw - lead_xw), tyw
-            dx, dy = tx - sx, ty - sy
+        # Through/lead pass (non-GK, non-CB jika tidak perlu)
+        if not is_gk and not is_def:
+            if best_tm_world is not None:
+                txw, tyw = best_tm_world
+                lead_xw = txw + 4.0
+                tx, ty = (lead_xw if self.team == "A" else fw - lead_xw), tyw
+                dx, dy = tx - sx, ty - sy
+                mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+                actions.append(self._make_action(0.0, 0.0, 0.65, (dx / mag, dy / mag)))
+            else:
+                actions.append(self._make_action(0.0, 0.0, 0.0, None))
+        else:
+            # clear to flank
+            flank_y = fh * (0.2 if sy < fh / 2 else 0.8)
+            actions.append(aim(fw * 0.3 if self.side == "left" else fw * 0.7, flank_y, 0.9))
+
+        # Lob pass / long ball
+        if not is_gk:
+            if best_tm_world is not None:
+                txw, tyw = best_tm_world
+                tx, ty = (txw if self.team == "A" else fw - txw), tyw
+                dx, dy = tx - sx, ty - sy
+                mag = math.sqrt(dx * dx + dy * dy) + 1e-6
+                actions.append(self._make_action(0.0, 0.0, 0.9, (dx / mag, dy / mag)))
+            else:
+                actions.append(self._make_action(0.0, 0.0, 0.0, None))
+        else:
+            # long clear upfield
+            tgt_x = fw * 0.6 if self.side == "left" else fw * 0.4
+            tgt_y = fh * 0.5
+            actions.append(aim(tgt_x, tgt_y, 1.0))
+
+        # Shooting options (non-GK; defender low power)
+        if not is_gk:
+            dx, dy = gx - sx, gy - sy
             mag = math.sqrt(dx * dx + dy * dy) + 1e-6
-            actions.append(self._make_action(0.0, 0.0, 0.65, (dx / mag, dy / mag)))
+            power_main = 1.0 if (is_striker or is_wing) else 0.6
+            power_place = 0.7 if (is_striker or is_wing) else 0.4
+            actions.append(self._make_action(0.0, 0.0, power_main, (dx / mag, dy / mag)))
+            actions.append(self._make_action(0.0, 0.0, power_place, (dx / mag, dy / mag)))
         else:
+            # hold/clear variants for GK
+            tgt_x = fw * 0.55 if self.side == "left" else fw * 0.45
+            tgt_y = fh * 0.5
+            actions.append(aim(tgt_x, tgt_y, 0.7))
+            actions.append(aim(tgt_x, tgt_y, 0.9))
+
+        # Sprint forward (attacking emphasis)
+        vx, vy = mv(gx - sx, gy - sy, self.max_move_speed * self.sprint_multiplier)
+        actions.append(self._make_action(vx, vy, 0.0, None))
+
+        # Ensure fixed length: pad/truncate to n_actions
+        while len(actions) < self.n_actions:
             actions.append(self._make_action(0.0, 0.0, 0.0, None))
-
-        # 14 lob pass
-        if best_tm_world is not None:
-            txw, tyw = best_tm_world
-            tx, ty = (txw if self.team == "A" else fw - txw), tyw
-            dx, dy = tx - sx, ty - sy
-            mag = math.sqrt(dx * dx + dy * dy) + 1e-6
-            actions.append(self._make_action(0.0, 0.0, 0.9, (dx / mag, dy / mag)))
-        else:
-            actions.append(self._make_action(0.0, 0.0, 0.0, None))
-
-        # 15 shoot power
-        dx, dy = gx - sx, gy - sy
-        mag = math.sqrt(dx * dx + dy * dy) + 1e-6
-        actions.append(self._make_action(0.0, 0.0, 1.0, (dx / mag, dy / mag)))
-
-        # 16 shoot placed
-        actions.append(self._make_action(0.0, 0.0, 0.7, (dx / mag, dy / mag)))
-
-        # 17 tackle (dash ke bola)
-        vx, vy = mv(bx - sx, by - sy, self.max_move_speed * self.sprint_multiplier)
-        actions.append(self._make_action(vx, vy, 0.0, None))
-
-        # 18 block lane (midpoint bola->gawang)
-        midx, midy = (bx + gx) / 2, (by + gy) / 2
-        vx, vy = mv(midx - sx, midy - sy, self.max_move_speed * 0.9)
-        actions.append(self._make_action(vx, vy, 0.0, None))
-
-        # 19 press (ke ball carrier kalau ada)
-        bc_idx = e.get("ball_carrier_idx")
-        if bc_idx is not None and 0 <= bc_idx < len(players):
-            pc = players[bc_idx]
-            px, py = mirror_pos(float(pc.get("x", 0.0)), float(pc.get("y", 0.0)))
-        else:
-            px, py = bx, by
-        vx, vy = mv(px - sx, py - sy, self.max_move_speed * 1.05)
-        actions.append(self._make_action(vx, vy, 0.0, None))
-
-        # 20 go to home position (jaga shape)
-        hx, hy = home_x, home_y
-        vx, vy = mv(hx - sx, hy - sy, self.max_move_speed * 0.85)
-        actions.append(self._make_action(vx, vy, 0.0, None))
-
-        # 21 go to support pocket: sedikit di depan bola dan offset samping
-        support_x = min(fw, bx + 6.0)
-        offset_y = 6.0 if sy < by else -6.0
-        support_y = max(0.0, min(fh, by + offset_y))
-        vx, vy = mv(support_x - sx, support_y - sy, self.max_move_speed * 0.95)
-        actions.append(self._make_action(vx, vy, 0.0, None))
-
-        # 22 go to half-space top (opsi lari tanpa bola)
-        tgt_x = fw * 0.92
-        tgt_y = fh * 0.28
-        vx, vy = mv(tgt_x - sx, tgt_y - sy, self.max_move_speed)
-        actions.append(self._make_action(vx, vy, 0.0, None))
-
-        # 23 go to half-space bottom
-        tgt_x = fw * 0.92
-        tgt_y = fh * 0.72
-        vx, vy = mv(tgt_x - sx, tgt_y - sy, self.max_move_speed)
-        actions.append(self._make_action(vx, vy, 0.0, None))
+        if len(actions) > self.n_actions:
+            actions = actions[:self.n_actions]
 
         return actions
 
