@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2006,A,A,,default,0,60.14234875444795,,,,23,12,52.17391304347826,,,0,,,0,0,65.38550163097666
+team,,2006,B,B,,default,0,28.29181494661903,,,,8,2,25.0,,,0,,,0,0,59.48376974732092
+player,,2006,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.660041175558856
+player,,2006,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.860341220869413
+player,,2006,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.958007557822094
+player,,2006,p3,A,Center Back,default,0,,2,0,0,18,10,55.55555555555556,1,0,0,6,0,,,18.025279255980696
+player,,2006,p4,A,Right Fullback,default,0,,0,0,0,1,0,0.0,0,0,0,0,0,,,3.639160156088579
+player,,2006,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.095407937412809
+player,,2006,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.8556794583547402
+player,,2006,p7,A,Central Midfielder,default,0,,0,1,0,2,0,0.0,0,0,0,0,0,,,5.7776474144339325
+player,,2006,p8,A,Right Midfielder,default,0,,1,0,0,2,2,100.0,1,0,0,0,0,,,5.352743673261289
+player,,2006,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.467800772207791
+player,,2006,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.69339300898646
+player,,2006,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.915554247014729
+player,,2006,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.015907025560065
+player,,2006,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.281029922349021
+player,,2006,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.35385547437434
+player,,2006,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.366758033776841
+player,,2006,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.382677831259559
+player,,2006,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.33492209773231
+player,,2006,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.32791064287029
+player,,2006,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.296375317309529
+player,,2006,p20,B,Striker,default,0,,2,0,0,7,2,28.57142857142857,0,0,0,0,0,,,7.948054194035932
+player,,2006,p21,B,Left Winger,default,0,,2,0,0,1,0,0.0,0,0,0,0,0,,,9.260724961038258

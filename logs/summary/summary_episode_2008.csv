@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2008,A,A,,default,0,74.2857142857143,,,,6,0,0.0,,,0,,,0,0,117.87918255755999
+team,,2008,B,B,,default,0,22.637362637362685,,,,1,1,100.0,,,0,,,0,0,25.439730727963763
+player,,2008,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.696048145158237
+player,,2008,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.093944217723161
+player,,2008,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.935226593986405
+player,,2008,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.378548222193819
+player,,2008,p4,A,Right Fullback,default,0,,1,1,0,1,0,0.0,0,0,0,1,0,,,18.060457573791876
+player,,2008,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.295712668083915
+player,,2008,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.982462037379081
+player,,2008,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.05675654460718
+player,,2008,p8,A,Right Midfielder,default,0,,1,1,0,5,0,0.0,0,3,0,0,0,,,13.409005503662058
+player,,2008,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.022036377971014
+player,,2008,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,13.948984673003016
+player,,2008,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.8480725759559091
+player,,2008,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.6707480100436896
+player,,2008,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.3440677371827152
+player,,2008,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.2587356558783043
+player,,2008,p15,B,Left Fullback,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,2.9147574096864184
+player,,2008,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.452006730269682
+player,,2008,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.8925875856746415
+player,,2008,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.6705816451474906
+player,,2008,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.716792700009743
+player,,2008,p20,B,Striker,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,4.180951795423999
+player,,2008,p21,B,Left Winger,default,0,,1,1,0,1,1,100.0,0,3,0,0,0,,,4.490428882691059

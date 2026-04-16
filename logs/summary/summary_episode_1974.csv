@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1974,A,A,,default,0,9.93657505285389,,,,6,6,100.0,,,0,,,0,1,-49.14962528163031
+team,,1974,B,B,,default,0,82.76955602536951,,,,6,1,16.666666666666664,,,1,,,1,0,360.947128007416
+player,,1974,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.253305418786372
+player,,1974,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.651808729075578
+player,,1974,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.192948981141005
+player,,1974,p3,A,Center Back,default,0,,1,0,0,6,6,100.0,0,0,0,0,0,,,-1.8319778602053507
+player,,1974,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.888767839755518
+player,,1974,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.181662780751146
+player,,1974,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.239210187211313
+player,,1974,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.8126558290003274
+player,,1974,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.359807930963473
+player,,1974,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.382141958128862
+player,,1974,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.355337766611362
+player,,1974,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,21.820065203615936
+player,,1974,p12,B,Right Fullback,default,0,,1,0,0,0,0,0.0,15,0,0,0,0,,,40.224467779984124
+player,,1974,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,25.60447067209799
+player,,1974,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,25.861587838001594
+player,,1974,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,25.77178919481188
+player,,1974,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,31.08307981619713
+player,,1974,p17,B,Central Midfielder,default,0,,1,0,0,3,0,0.0,1,0,1,1,0,,,35.71576704726567
+player,,1974,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,31.056126487881887
+player,,1974,p19,B,Right Winger,default,0,,3,1,0,2,0,0.0,0,1,0,0,0,,,43.45588178670615
+player,,1974,p20,B,Striker,default,0,,0,0,0,1,1,100.0,6,0,0,0,0,,,41.7811613355453
+player,,1974,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,38.57273084530724

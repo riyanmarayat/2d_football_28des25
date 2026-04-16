@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,46,A,A,,default,0,51.03857566765583,,,,3,2,66.66666666666666,,,0,,,0,0,59.63955397355967
+team,,46,B,B,,default,0,17.804154302670693,,,,4,0,0.0,,,0,,,0,0,16.232649375032736
+player,,46,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.0643995582095465
+player,,46,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.106211538257358
+player,,46,p2,A,Center Back,default,0,,1,0,1,0,0,0.0,3,0,0,1,0,,,5.83087772542227
+player,,46,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.237962404350447
+player,,46,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.239355327069554
+player,,46,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.131001407964223
+player,,46,p6,A,Central Midfielder,default,0,,0,0,0,2,2,100.0,1,0,0,0,0,,,5.311510526939468
+player,,46,p7,A,Central Midfielder,default,0,,1,0,0,1,0,0.0,2,1,0,0,0,,,8.71290842168387
+player,,46,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.247120306517428
+player,,46,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,1,0,,,6.70248224226216
+player,,46,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.055724514883322
+player,,46,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.341816707149419
+player,,46,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.1676393578048148
+player,,46,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.1821916892056676
+player,,46,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.2030865181561394
+player,,46,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.124883455895725
+player,,46,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.9284246447601807
+player,,46,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.9898810216500917
+player,,46,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.1540151816289177
+player,,46,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.2485785742682864
+player,,46,p20,B,Striker,default,0,,2,0,0,4,0,0.0,2,0,0,0,0,,,3.320735526313804
+player,,46,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.5713966981996756

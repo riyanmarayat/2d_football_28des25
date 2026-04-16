@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1967,A,A,,default,0,13.492063492063508,,,,1,0,0.0,,,0,,,0,0,0.7691635962727883
+team,,1967,B,B,,default,0,50.79365079365091,,,,0,0,0.0,,,0,,,0,0,17.477072372218444
+player,,1967,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.032335258089962265
+player,,1967,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.09828999978692249
+player,,1967,p2,A,Center Back,default,0,,1,0,0,1,0,0.0,0,0,0,0,0,,,2.3867327770338127
+player,,1967,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.06769101718462467
+player,,1967,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.033563615307138195
+player,,1967,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.006314771138356379
+player,,1967,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.2053339846813405
+player,,1967,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.36295246735827724
+player,,1967,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.2851608612615497
+player,,1967,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.45349519214349887
+player,,1967,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.269012013383203
+player,,1967,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.6452523026678867
+player,,1967,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.230021466996259
+player,,1967,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.065645186873658
+player,,1967,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.0487392780113245
+player,,1967,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.9825203938374263
+player,,1967,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.5851762564429854
+player,,1967,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.5624235542025047
+player,,1967,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.5972349485584436
+player,,1967,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.123825368641664
+player,,1967,p20,B,Striker,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,3.5382765505266995
+player,,1967,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.097957065459498

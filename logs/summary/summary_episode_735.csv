@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,735,A,A,,default,0,21.172638436482156,,,,0,0,0.0,,,0,,,0,1,-103.66847106957083
+team,,735,B,B,,default,0,69.70684039087949,,,,4,1,25.0,,,1,,,1,0,143.3413288241273
+player,,735,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-18.512516085215534
+player,,735,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-18.299042018859396
+player,,735,p2,A,Center Back,default,0,,1,0,3,0,0,0.0,1,0,0,0,0,,,-16.80542912299622
+player,,735,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-18.168758071522753
+player,,735,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-17.998011539027335
+player,,735,p5,A,Left Midfielder,default,0,,0,1,0,0,0,0.0,0,0,0,0,0,,,-2.5555414323850383
+player,,735,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.1240224290444716
+player,,735,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.9272551631897046
+player,,735,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.498298716629857
+player,,735,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.5715305974173166
+player,,735,p10,A,Striker,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,0.7919341067167416
+player,,735,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.20687049317512
+player,,735,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.532088390488433
+player,,735,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.606493055351578
+player,,735,p14,B,Center Back,default,0,,1,0,0,3,0,0.0,2,0,1,0,0,,,14.739749369267587
+player,,735,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.212749010909135
+player,,735,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.947917873620707
+player,,735,p17,B,Central Midfielder,default,0,,2,1,0,0,0,0.0,3,0,0,0,0,,,14.378606224254746
+player,,735,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.118619792169417
+player,,735,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.970648332146332
+player,,735,p20,B,Striker,default,0,,0,0,0,1,1,100.0,0,0,0,0,0,,,16.020900411698427
+player,,735,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.606685871045794

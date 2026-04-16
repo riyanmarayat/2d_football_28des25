@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1341,A,A,,default,0,43.22469982847304,,,,1,0,0.0,,,1,,,1,0,103.62326664309042
+team,,1341,B,B,,default,0,50.77186963979372,,,,0,0,0.0,,,0,,,0,1,69.41437820607929
+player,,1341,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.161448725890121
+player,,1341,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.154929981219045
+player,,1341,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.706202704592848
+player,,1341,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.153790018314963
+player,,1341,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.083332384616343
+player,,1341,p5,A,Left Midfielder,default,0,,2,1,0,1,0,0.0,1,0,1,0,0,,,15.643846160598818
+player,,1341,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.29779143341305
+player,,1341,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.336317373253522
+player,,1341,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.054584658627054
+player,,1341,p9,A,Striker,default,0,,1,1,0,0,0,0.0,0,0,0,0,0,,,12.766925193292144
+player,,1341,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.264098009272379
+player,,1341,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.1009976368872492
+player,,1341,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.9710580124687835
+player,,1341,p13,B,Center Back,default,0,,1,0,0,0,0,0.0,1,0,0,2,0,,,14.874287425984354
+player,,1341,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.337681237471873
+player,,1341,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.0224683000000825
+player,,1341,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.818092381619612
+player,,1341,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.077929876030254
+player,,1341,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.118908804812149
+player,,1341,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.35949559296792
+player,,1341,p20,B,Striker,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,9.365469355830099
+player,,1341,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.367989582006652

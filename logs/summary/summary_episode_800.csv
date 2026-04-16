@@ -1,0 +1,49 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,800,A,A,,default,0,0.0,,,,0,0,0.0,,,0,,,0,1,-48.08941027192233
+team,,800,B,B,,default,0,48.93617021276602,,,,0,0,0.0,,,1,,,1,0,59.65355313783009
+player,,800,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.729562045385772
+player,,800,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.6509254739233175
+player,,800,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.641729718385157
+player,,800,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.70648209785999
+player,,800,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.406476531134033
+player,,800,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.5526563251661085
+player,,800,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.862596004850082
+player,,800,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.688276683502223
+player,,800,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.8346135554462637
+player,,800,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.131712995555639
+player,,800,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.884378840713748
+player,,800,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.448446476243865
+player,,800,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.310045942863303
+player,,800,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.324406809604924
+player,,800,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.415945673735963
+player,,800,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.539627301995555
+player,,800,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.694823813401701
+player,,800,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.744441055890204
+player,,800,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.600742347950829
+player,,800,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.475606218808996
+player,,800,p20,B,Striker,default,0,,1,0,0,0,0,0.0,1,0,1,0,0,,,7.479263631730261
+player,,800,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.620203865604473
+window100,701-800,800,B,B,,,,48.73754980079642,,,,274,76,27.73722627737226,,,37,,,37,7,
+window100,701-800,800,A,A,,,,33.85209163346586,,,,223,44,19.730941704035875,,,7,,,7,37,
+window100,701-800,800,p0,A,Goalkeeper,,,,29,13,0,5,0,0.0,12,7,6,2,32,,,
+window100,701-800,800,p1,A,Left Fullback,,,,11,6,2,27,12,44.44444444444444,2,1,0,2,0,,,
+window100,701-800,800,p2,A,Center Back,,,,33,6,23,48,3,6.25,30,0,0,26,0,,,
+window100,701-800,800,p3,A,Center Back,,,,14,2,0,13,1,7.6923076923076925,5,2,2,8,0,,,
+window100,701-800,800,p4,A,Right Fullback,,,,6,2,1,30,15,50.0,3,1,0,6,0,,,
+window100,701-800,800,p5,A,Left Midfielder,,,,10,7,0,27,0,0.0,4,1,1,1,0,,,
+window100,701-800,800,p6,A,Central Midfielder,,,,18,10,12,14,2,14.285714285714285,12,0,0,2,0,,,
+window100,701-800,800,p7,A,Central Midfielder,,,,10,1,2,11,6,54.54545454545454,42,0,0,9,0,,,
+window100,701-800,800,p8,A,Right Midfielder,,,,5,4,5,4,1,25.0,5,0,1,0,0,,,
+window100,701-800,800,p9,A,Striker,,,,9,4,2,18,1,5.555555555555555,17,1,1,0,0,,,
+window100,701-800,800,p10,A,Striker,,,,26,4,2,26,3,11.538461538461538,20,5,1,0,0,,,
+window100,701-800,800,p11,B,Goalkeeper,,,,3,2,0,2,0,0.0,2,2,2,0,2,,,
+window100,701-800,800,p12,B,Right Fullback,,,,6,2,1,1,0,0.0,3,0,1,0,0,,,
+window100,701-800,800,p13,B,Center Back,,,,16,6,1,15,0,0.0,60,2,1,10,0,,,
+window100,701-800,800,p14,B,Center Back,,,,17,7,6,20,11,55.00000000000001,41,3,1,9,0,,,
+window100,701-800,800,p15,B,Left Fullback,,,,10,1,4,6,0,0.0,4,1,0,22,0,,,
+window100,701-800,800,p16,B,Central Midfielder,,,,7,6,0,5,1,20.0,9,0,2,1,0,,,
+window100,701-800,800,p17,B,Central Midfielder,,,,11,3,0,1,0,0.0,15,0,5,0,0,,,
+window100,701-800,800,p18,B,Central Midfielder,,,,13,2,2,40,32,80.0,2,4,0,1,0,,,
+window100,701-800,800,p19,B,Right Winger,,,,8,1,0,19,1,5.263157894736842,9,1,3,1,0,,,
+window100,701-800,800,p20,B,Striker,,,,168,15,2,160,30,18.75,114,20,13,48,0,,,
+window100,701-800,800,p21,B,Left Winger,,,,16,5,1,5,1,20.0,7,2,4,0,0,,,

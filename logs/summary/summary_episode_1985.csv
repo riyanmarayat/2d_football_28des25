@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1985,A,A,,default,0,0.0,,,,0,0,0.0,,,0,,,0,0,-34.6129406479938
+team,,1985,B,B,,default,0,71.73469387755046,,,,9,5,55.55555555555556,,,0,,,0,0,291.71743762318147
+player,,1985,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.051916743116008
+player,,1985,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.23387382346372
+player,,1985,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.56857103862817
+player,,1985,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.4360494032436995
+player,,1985,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.37138473388346
+player,,1985,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.5125383908734413
+player,,1985,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.6520667516258012
+player,,1985,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.3677444831107115
+player,,1985,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.467446128768185
+player,,1985,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.459319291980032
+player,,1985,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.4920298592995076
+player,,1985,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,15.625740402861544
+player,,1985,p12,B,Right Fullback,default,0,,1,0,0,0,0,0.0,12,1,0,1,0,,,29.19444893599534
+player,,1985,p13,B,Center Back,default,0,,1,0,0,1,1,100.0,0,0,0,0,0,,,23.912364397773622
+player,,1985,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,19.81648065758625
+player,,1985,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,19.7199714229607
+player,,1985,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,25.09716996265474
+player,,1985,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,25.675953436085905
+player,,1985,p18,B,Central Midfielder,default,0,,0,0,0,1,0,0.0,1,0,0,0,0,,,29.241092132793703
+player,,1985,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,32.29673857131293
+player,,1985,p20,B,Striker,default,0,,1,0,0,4,4,100.0,1,0,0,0,0,,,36.479101276511294
+player,,1985,p21,B,Left Winger,default,0,,2,0,0,3,0,0.0,0,0,0,0,0,,,34.65837642664395

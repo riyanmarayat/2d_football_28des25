@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2015,A,A,,default,0,12.648221343873548,,,,0,0,0.0,,,0,,,0,1,-138.6010175542078
+team,,2015,B,B,,default,0,81.81818181818184,,,,1,0,0.0,,,1,,,1,0,130.62814963353426
+player,,2015,p0,A,Goalkeeper,default,0,,0,1,0,0,0,0.0,1,0,1,0,0,,,-14.658435213002374
+player,,2015,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-21.221696055357565
+player,,2015,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-21.646563532673646
+player,,2015,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-21.048552975580773
+player,,2015,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-21.36644171977035
+player,,2015,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.503216461205197
+player,,2015,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.692731743653801
+player,,2015,p7,A,Central Midfielder,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,-7.472638907683207
+player,,2015,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.7005182384034
+player,,2015,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.151547824340485
+player,,2015,p10,A,Striker,default,0,,0,1,0,0,0,0.0,0,0,0,0,0,,,-4.138674882536975
+player,,2015,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.932901641035468
+player,,2015,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.765508830331491
+player,,2015,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.922982235028794
+player,,2015,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.255169440838618
+player,,2015,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.761437002355478
+player,,2015,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.765344677269008
+player,,2015,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.8404178206422
+player,,2015,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.783518989527064
+player,,2015,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.897366723878367
+player,,2015,p20,B,Striker,default,0,,4,1,0,1,0,0.0,0,0,0,0,0,,,23.21111243480203
+player,,2015,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,13.49238983782589

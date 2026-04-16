@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1996,A,A,,default,0,0.0,,,,0,0,0.0,,,0,,,0,0,-5.457596566086577
+team,,1996,B,B,,default,0,26.618705035971274,,,,1,0,0.0,,,0,,,0,0,12.667594956147289
+player,,1996,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.7049440622245408
+player,,1996,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.814712156478431
+player,,1996,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.3300633196437505
+player,,1996,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.7711664455404783
+player,,1996,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.3444405532326744
+player,,1996,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.441123875408982
+player,,1996,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.302842546728794
+player,,1996,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.60154919270041
+player,,1996,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.2795907862152009
+player,,1996,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.39170962936190923
+player,,1996,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.4754539985514036
+player,,1996,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.407953962238075
+player,,1996,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.6157317678845493
+player,,1996,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.38008832027065836
+player,,1996,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.3900875235259996
+player,,1996,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.4577089144864859
+player,,1996,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.04308568858406733
+player,,1996,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.32645771672061186
+player,,1996,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.1222435537696902
+player,,1996,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.6675261603899798
+player,,1996,p20,B,Striker,default,0,,1,0,0,1,0,0.0,0,0,0,0,0,,,0.17081485458325496
+player,,1996,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.17206787086205755

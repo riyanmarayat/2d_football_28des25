@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1951,A,A,,default,0,0.0,,,,0,0,0.0,,,0,,,0,1,-48.91455378028962
+team,,1951,B,B,,default,0,60.56338028169023,,,,0,0,0.0,,,1,,,1,0,75.74758646465693
+player,,1951,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.734344356703278
+player,,1951,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.703860395530243
+player,,1951,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.784418021059004
+player,,1951,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.597953059267193
+player,,1951,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.562886700241242
+player,,1951,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.968316257553783
+player,,1951,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.114661496819094
+player,,1951,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.9229579239105887
+player,,1951,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.675443308715068
+player,,1951,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.787328422981003
+player,,1951,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.0623838375091195
+player,,1951,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.2066206977903615
+player,,1951,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.417908733110559
+player,,1951,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.359952827539216
+player,,1951,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.463502399297898
+player,,1951,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.608214832680703
+player,,1951,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.7729913025205235
+player,,1951,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.323664305197529
+player,,1951,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.135253938268566
+player,,1951,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.1606246668424305
+player,,1951,p20,B,Striker,default,0,,1,0,0,0,0,0.0,1,0,1,0,0,,,10.593754606742847
+player,,1951,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.705098154666311

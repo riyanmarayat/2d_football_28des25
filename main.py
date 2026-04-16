@@ -26,6 +26,8 @@ try:
     NUM_EPISODES = int(input("Berapa episode training? [default 1]: ") or "1")
 except Exception:
     NUM_EPISODES = 1
+run_mode = input("Mode (train/sim) [default train]: ").strip().lower() or "train"
+SIM_ONLY = (run_mode == "sim")
 CHECKPOINT_DIR = "checkpoints"
 LOG_DIR = "logs"
 LOG_STEP_DIR = os.path.join(LOG_DIR, "steps")
@@ -605,6 +607,13 @@ for idx, p in enumerate(base_players_init):
 # Load checkpoints sekali di awal (akan overwrite jika ada)
 load_team_checkpoint(team_left, agents, "left")
 load_team_checkpoint(team_right, agents, "right")
+if SIM_ONLY:
+    # matikan eksplorasi dan pembelajaran saat mode simulasi
+    for ag in agents:
+        ag.epsilon = 0.0
+        ag.epsilon_start = 0.0
+        ag.epsilon_end = 0.0
+    print("Mode simulasi: agen hanya menjalankan checkpoint tanpa update atau penulisan checkpoint baru.")
 
 for ep in range(NUM_EPISODES):
     # rebuild players per episode, reuse agents (index/order consistent)
@@ -633,7 +642,8 @@ for ep in range(NUM_EPISODES):
     recorder = Recorder()
     save_video = False
     if video_mode == "interval":
-        save_video = ((ep + 1) % max(1, video_interval) == 0)
+        # simpan tiap N episode, dan pastikan episode terakhir juga tersimpan
+        save_video = ((ep + 1) % max(1, video_interval) == 0) or (ep == NUM_EPISODES - 1)
     elif video_mode == "last":
         save_video = (ep == NUM_EPISODES - 1)
     elif video_mode in ("all", "always"):
@@ -650,6 +660,7 @@ for ep in range(NUM_EPISODES):
 
     old_state = simulator.snapshot()
     total_rewards = [0.0 for _ in agents]
+    team_total_rewards = {team_left: 0.0, team_right: 0.0}
     step_rows: List[Dict[str, Any]] = []
 
     # Initialize last_state for each agent
@@ -671,11 +682,21 @@ for ep in range(NUM_EPISODES):
         new_state = simulator.snapshot()
         done = bool(simulator.last_goal or simulator.out_of_bounds or simulator.offside)
 
+        team_reward_step = {team_left: 0.0, team_right: 0.0}
         for i, agent in enumerate(agents):
             reward = compute_agent_reward(simulator, agent, old_state, new_state, actions[i])
-            if agent.last_action_idx is not None:
+            if (not SIM_ONLY) and agent.last_action_idx is not None:
                 agent.learn(reward, new_state, done)
             total_rewards[i] += reward
+            team_reward_step[agent.team] += reward
+            team_total_rewards[agent.team] += reward
+        # logging singkat setiap N step
+        if step % 100 == 0:
+            info = getattr(agents[0], "_last_train_info", None)
+            if info:
+                print(f"[Ep {ep+1}] step {step+1}: r0={total_rewards[0]:.3f} "
+                      f"eps={info.get('epsilon', 0):.3f} buf={info.get('buffer', 0)} "
+                      f"loss={info.get('loss', 0):.4f} train_steps={info.get('train_steps', 0)}")
 
         stats_tracker.record_step(old_state, new_state, actions, dt)
 
@@ -695,6 +716,8 @@ for ep in range(NUM_EPISODES):
             "ball_controller_team": ball_ctrl_team,
             "last_goal": simulator.last_goal or "",
             "reward_p0": total_rewards[0],
+            "team_reward_left_step": team_reward_step.get(team_left, 0.0),
+            "team_reward_right_step": team_reward_step.get(team_right, 0.0),
             "actions": json.dumps(actions),
         })
         # terminal ringkas: reward dan pos pemain pertama
@@ -716,24 +739,45 @@ for ep in range(NUM_EPISODES):
     if exporter:
         print(f"Episode {ep+1} video saved to {exporter.path}")
     print(f"Episode rewards (sum): {total_rewards}")
+    print(f"Episode team rewards: {team_left}={team_total_rewards.get(team_left, 0.0):.3f} "
+          f"{team_right}={team_total_rewards.get(team_right, 0.0):.3f}")
     # tulis step log CSV
     step_path = os.path.join(LOG_STEP_DIR, f"episode_{ep+1}_steps.csv")
     with open(step_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["episode", "step", "scenario", "scenario_template", "scenario_variant",
-                                               "ball_x", "ball_y", "ball_controller", "ball_controller_team", "last_goal", "reward_p0", "actions"])
+                                               "ball_x", "ball_y", "ball_controller", "ball_controller_team", "last_goal",
+                                               "reward_p0", "team_reward_left_step", "team_reward_right_step", "actions"])
         writer.writeheader()
         writer.writerows(step_rows)
     # tulis summary CSV (episode + window)
-    summary_rows = ep_rows + window_rows_100 + window_rows_1000
-    summary_path = os.path.join(LOG_SUMMARY_DIR, f"summary_episode_{ep+1}.csv")
-    with open(summary_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "category", "window", "episode", "entity", "team", "role",
+    # sisipkan reward episode ke row summary (team & player), windows dikosongkan
+    for row in ep_rows:
+        if row.get("category") == "team":
+            tm = row.get("team")
+            row["reward_episode"] = team_total_rewards.get(tm, 0.0)
+        elif row.get("category") == "player":
+            ent = str(row.get("entity", ""))
+            try:
+                idx = int(ent[1:]) if ent.startswith("p") else None
+            except Exception:
+                idx = None
+            row["reward_episode"] = total_rewards[idx] if idx is not None and idx < len(total_rewards) else ""
+        else:
+            row["reward_episode"] = ""
+    for wrows in (window_rows_100, window_rows_1000):
+        for row in wrows:
+            row["reward_episode"] = ""
+
+        summary_rows = ep_rows + window_rows_100 + window_rows_1000
+        summary_path = os.path.join(LOG_SUMMARY_DIR, f"summary_episode_{ep+1}.csv")
+        with open(summary_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=[
+                "category", "window", "episode", "entity", "team", "role",
             "scenario", "scenario_variant",
             "possession_pct", "dribbles", "tackles", "blocks",
             "passes", "passes_completed", "pass_accuracy",
             "shots_on", "shots_off", "goals", "clears", "saves",
-            "goals_for", "goals_against",
+            "goals_for", "goals_against", "reward_episode",
         ])
         writer.writeheader()
         writer.writerows(summary_rows)
@@ -742,16 +786,19 @@ for ep in range(NUM_EPISODES):
     for row in ep_rows:
         if row["category"] == "team":
             print(f"[Ep {ep+1}] Team {row['team']}: possession {row['possession_pct']:.1f}%, goals {row['goals_for']} kebobolan {row['goals_against']} pass acc {row['pass_accuracy']:.1f}%")
-    if window_rows_100:
-        print("Summary window100 ditulis.")
-    if window_rows_1000:
-        print("Summary window1000 ditulis.")
-    print(f"Step log saved to {step_path}")
-    print(f"Summary log saved to {summary_path}")
+        if window_rows_100:
+            print("Summary window100 ditulis.")
+        if window_rows_1000:
+            print("Summary window1000 ditulis.")
+        print(f"Step log saved to {step_path}")
+        print(f"Summary log saved to {summary_path}")
 
-    # Save checkpoints per team
-    save_team_checkpoint(team_left, agents, "left")
-    save_team_checkpoint(team_right, agents, "right")
-    if (ep + 1) % 100 == 0:
-        save_team_checkpoint(f"{team_left}_ep{ep+1}", agents, "left")
-        save_team_checkpoint(f"{team_right}_ep{ep+1}", agents, "right")
+        # Save checkpoints per team (skip jika hanya simulasi)
+        if not SIM_ONLY:
+            save_team_checkpoint(team_left, agents, "left")
+            save_team_checkpoint(team_right, agents, "right")
+            if (ep + 1) % 100 == 0:
+                save_team_checkpoint(f"{team_left}_ep{ep+1}", agents, "left")
+                save_team_checkpoint(f"{team_right}_ep{ep+1}", agents, "right")
+        else:
+            print("Mode simulasi: checkpoint tidak disimpan.")

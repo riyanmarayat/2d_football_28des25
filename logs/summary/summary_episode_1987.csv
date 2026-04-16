@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1987,A,A,,default,0,7.199999999999859,,,,5,2,40.0,,,0,,,0,0,29.079818974479103
+team,,1987,B,B,,default,0,33.09999999999925,,,,17,14,82.35294117647058,,,0,,,0,0,73.6867235538639
+player,,1987,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.616689157932446
+player,,1987,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.7229107090453888
+player,,1987,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.4620897342110968
+player,,1987,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.0834813022574017
+player,,1987,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.1098039827577537
+player,,1987,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.2921311878256923
+player,,1987,p6,A,Central Midfielder,default,0,,0,0,0,2,2,100.0,2,0,0,0,0,,,4.067644941858398
+player,,1987,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.90348188654871
+player,,1987,p8,A,Right Midfielder,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,2.5127451818012547
+player,,1987,p9,A,Striker,default,0,,1,0,0,3,0,0.0,0,0,0,0,0,,,6.247361093324224
+player,,1987,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.0614797969170024
+player,,1987,p11,B,Goalkeeper,default,0,,1,0,0,0,0,0.0,0,1,0,0,0,,,4.362893835236078
+player,,1987,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,2.18739494182516
+player,,1987,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.037950086272552
+player,,1987,p14,B,Center Back,default,0,,1,0,0,1,1,100.0,0,0,0,0,0,,,2.7900529475816964
+player,,1987,p15,B,Left Fullback,default,0,,3,0,0,7,4,57.14285714285714,1,3,0,0,0,,,4.051269255752941
+player,,1987,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.847325470383248
+player,,1987,p17,B,Central Midfielder,default,0,,1,0,0,6,6,100.0,0,0,0,0,0,,,8.057722477191353
+player,,1987,p18,B,Central Midfielder,default,0,,1,0,0,1,1,100.0,0,0,0,0,0,,,9.63530847175315
+player,,1987,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.733942558774276
+player,,1987,p20,B,Striker,default,0,,1,0,0,2,2,100.0,0,0,0,0,0,,,11.140416330498224
+player,,1987,p21,B,Left Winger,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,9.84244717859516

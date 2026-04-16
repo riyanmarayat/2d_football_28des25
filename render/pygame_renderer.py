@@ -176,9 +176,16 @@ class PygameRenderer:
             7.32 * self.scale
         ))
 
-        # Draw players
+        # Draw players (fixed team colors)
+        team_colors = {
+            "A": (0, 0, 255),      # biru
+            "B": (255, 0, 0),      # merah
+            "C": (245, 245, 245),  # putih
+            "D": (0, 0, 0),        # hitam
+        }
         for player in state["players"]:
-            color = (0, 0, 255) if player["team"] == "A" else (255, 0, 0)
+            team_key = str(player.get("team", "")).upper()
+            color = team_colors.get(team_key, (128, 128, 128))
             x = int((player["x"] + self.outer_margin) * self.scale)
             y = int((player["y"] + self.outer_margin) * self.scale)
             pygame.draw.circle(self.screen, color, (x, y), int(0.5 * self.scale))

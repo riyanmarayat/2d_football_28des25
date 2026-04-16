@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1994,A,A,,default,0,79.60526315789475,,,,1,0,0.0,,,0,,,0,0,102.11516918737014
+team,,1994,B,B,,default,0,10.52631578947371,,,,0,0,0.0,,,0,,,0,0,3.5180572630304927
+player,,1994,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.088545924090893
+player,,1994,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.55108131975439
+player,,1994,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.231428394142492
+player,,1994,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.873909743431356
+player,,1994,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.0102387329087374
+player,,1994,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.671325591662388
+player,,1994,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.30023214223121
+player,,1994,p7,A,Central Midfielder,default,0,,1,0,0,0,0,0.0,0,2,0,0,0,,,14.500869693297997
+player,,1994,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.409349936691411
+player,,1994,p9,A,Striker,default,0,,2,0,0,1,0,0.0,0,0,0,0,0,,,15.290013784215228
+player,,1994,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.188173924944032
+player,,1994,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.6368978519125519
+player,,1994,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.21708471227251716
+player,,1994,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.23950592324798223
+player,,1994,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.28156910202573726
+player,,1994,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.10746831340294681
+player,,1994,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.4840711335116005
+player,,1994,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.2043033336225495
+player,,1994,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.29775917304452576
+player,,1994,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.5174528569994813
+player,,1994,p20,B,Striker,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,0.6144565983948761
+player,,1994,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.44876873567038517

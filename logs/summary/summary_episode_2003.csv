@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2003,A,A,,default,0,47.20812182741125,,,,0,0,0.0,,,0,,,0,1,-34.76383741654
+team,,2003,B,B,,default,0,35.53299492385796,,,,0,0,0.0,,,1,,,1,0,72.51672730388458
+player,,2003,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,1,0,1,0,0,,,43.631600447600185
+player,,2003,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-8.728610261031534
+player,,2003,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-9.035068809908095
+player,,2003,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-8.525742708764389
+player,,2003,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-8.653283641888848
+player,,2003,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.773748270200788
+player,,2003,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.333323340661173
+player,,2003,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.205475113239181
+player,,2003,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.9065328831690165
+player,,2003,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.512793038232415
+player,,2003,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.720859797044696
+player,,2003,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.154970016821925
+player,,2003,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.230422759592722
+player,,2003,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.343680353276834
+player,,2003,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.281938842938254
+player,,2003,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.238447450022377
+player,,2003,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.886585176640782
+player,,2003,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.7628505448908065
+player,,2003,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.490643233273042
+player,,2003,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.045865627475935
+player,,2003,p20,B,Striker,default,0,,2,0,0,0,0,0.0,2,0,0,0,0,,,9.769199113700793
+player,,2003,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.31212418525116

@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1981,A,A,,default,0,0.0,,,,0,0,0.0,,,0,,,0,1,-49.03771190236319
+team,,1981,B,B,,default,0,53.125000000000114,,,,0,0,0.0,,,1,,,1,0,68.34565420295358
+player,,1981,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.754439021605059
+player,,1981,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.355610394478706
+player,,1981,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.820146549878508
+player,,1981,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.564223555735976
+player,,1981,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.686875086533472
+player,,1981,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.036983890449881
+player,,1981,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.017946087131085
+player,,1981,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.912361019753967
+player,,1981,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.74373747019067
+player,,1981,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-5.190713447030362
+player,,1981,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-4.954675379575504
+player,,1981,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.918381896077676
+player,,1981,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.848333191035536
+player,,1981,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.075759851420101
+player,,1981,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.118627088362047
+player,,1981,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.036325210361463
+player,,1981,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.110843601582399
+player,,1981,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.588797349127527
+player,,1981,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.092823796543201
+player,,1981,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.443171630866274
+player,,1981,p20,B,Striker,default,0,,1,0,0,0,0,0.0,1,0,1,0,0,,,9.216151931405083
+player,,1981,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.89643865617225

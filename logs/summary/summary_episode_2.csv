@@ -1,25 +1,25 @@
-category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against
-team,,2,A,A,,default,0,2.4999999999999494,,,,3,0,0.0,,,0,,,0,0
-team,,2,B,B,,default,0,5.099999999999903,,,,0,0,0.0,,,0,,,0,0
-player,,2,p0,A,Goalkeeper,default,0,,0,0,0,3,0,0.0,2,0,0,0,5,,
-player,,2,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
-player,,2,p19,B,Right Winger,default,0,,0,0,2,0,0,0.0,5,0,0,0,0,,
-player,,2,p20,B,Striker,default,0,,1,0,0,0,0,0.0,5,0,0,1,0,,
-player,,2,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2,A,A,,default,0,5.390835579514839,,,,4,1,25.0,,,0,,,0,0,10.245958346826125
+team,,2,B,B,,default,0,41.77897574123994,,,,15,5,33.33333333333333,,,0,,,0,0,54.45797656936487
+player,,2,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.025213646167401
+player,,2,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,1.0975179560297905
+player,,2,p2,A,Center Back,default,0,,0,0,0,2,0,0.0,0,0,0,0,0,,,1.3007679350330332
+player,,2,p3,A,Center Back,default,0,,0,0,0,1,1,100.0,0,0,0,0,0,,,0.9797458443530529
+player,,2,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.9058058844720394
+player,,2,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.4853504795894371
+player,,2,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.38286711255991307
+player,,2,p7,A,Central Midfielder,default,0,,0,0,1,1,0,0.0,1,0,0,0,0,,,1.1085900541259064
+player,,2,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.4279530351629774
+player,,2,p9,A,Striker,default,0,,0,0,0,0,0,0.0,1,0,0,0,0,,,1.9371968096563774
+player,,2,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.5949495896761967
+player,,2,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,1,0,0,0,0,,,7.617094115851551
+player,,2,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.7080364320606845
+player,,2,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.556302250389301
+player,,2,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.486383798262279
+player,,2,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.623800058494388
+player,,2,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,3.9994915078313347
+player,,2,p17,B,Central Midfielder,default,0,,0,1,1,11,3,27.27272727272727,2,1,0,0,0,,,6.934666230866161
+player,,2,p18,B,Central Midfielder,default,0,,1,0,0,2,0,0.0,3,0,0,0,0,,,4.659911535217796
+player,,2,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.013503250568222
+player,,2,p20,B,Striker,default,0,,3,0,0,2,2,100.0,5,0,0,1,0,,,6.898107588540664
+player,,2,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.960679801282293

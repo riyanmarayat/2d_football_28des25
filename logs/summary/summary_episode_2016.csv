@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2016,A,A,,default,0,1.226993865030678,,,,2,0,0.0,,,0,,,0,0,-90.51287712202789
+team,,2016,B,B,,default,0,63.190184049079775,,,,6,3,50.0,,,0,,,0,0,95.74742507577085
+player,,2016,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-17.807232342151657
+player,,2016,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-17.55247748960263
+player,,2016,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-17.594662878833933
+player,,2016,p3,A,Center Back,default,0,,0,0,1,2,0,0.0,0,0,0,0,0,,,-17.572290719419122
+player,,2016,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-17.23562589925499
+player,,2016,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.5951819883484725
+player,,2016,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.7676845096798555
+player,,2016,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.5336427404775448
+player,,2016,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.4421625014566727
+player,,2016,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.6168047453709313
+player,,2016,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.2048886925679561
+player,,2016,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.667379423781253
+player,,2016,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.768243675114962
+player,,2016,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.7932411028678725
+player,,2016,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.556708420660634
+player,,2016,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.848014525468796
+player,,2016,p16,B,Central Midfielder,default,0,,1,0,0,0,0,0.0,2,0,0,1,0,,,9.364075207260646
+player,,2016,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.10122213748051
+player,,2016,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.177332957120974
+player,,2016,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.241390869697318
+player,,2016,p20,B,Striker,default,0,,2,0,0,6,3,50.0,1,0,0,0,0,,,16.917389346459334
+player,,2016,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.312427409858522

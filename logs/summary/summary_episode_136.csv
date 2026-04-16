@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,136,A,A,,default,0,3.0264817150062506,,,,2,0,0.0,,,0,,,0,0,-3.428344971915759
+team,,136,B,B,,default,0,77.42749054224393,,,,36,23,63.888888888888886,,,0,,,0,0,214.25088697311813
+player,,136,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.26577013413104394
+player,,136,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.130698303124988
+player,,136,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.03939081415805899
+player,,136,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.685495477738268
+player,,136,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.36545266333760346
+player,,136,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.13181775919938415
+player,,136,p6,A,Central Midfielder,default,0,,2,0,0,2,0,0.0,2,0,0,0,0,,,0.41083724882730904
+player,,136,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,0.26158105700047257
+player,,136,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.9725654400395661
+player,,136,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.0268361156301653
+player,,136,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.014276838646569
+player,,136,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.406993396300049
+player,,136,p12,B,Right Fullback,default,0,,3,0,2,35,23,65.71428571428571,1,0,0,0,0,,,26.554560550463062
+player,,136,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.617695403383735
+player,,136,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.691249641997901
+player,,136,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.263546186419184
+player,,136,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,18.621898955512297
+player,,136,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,1,0,0,0,0,,,24.289119146958665
+player,,136,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,18.287246154854866
+player,,136,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,22.992019903408647
+player,,136,p20,B,Striker,default,0,,1,0,0,1,0,0.0,0,0,0,1,0,,,25.64521265875856
+player,,136,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,22.881344975060983

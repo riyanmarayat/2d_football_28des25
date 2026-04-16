@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1992,A,A,,default,0,0.0,,,,0,0,0.0,,,0,,,0,0,-141.87576252244597
+team,,1992,B,B,,default,0,95.65217391304348,,,,4,3,75.0,,,0,,,0,0,186.79921523288616
+player,,1992,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-26.973111113572294
+player,,1992,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-26.89798582767295
+player,,1992,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-27.078453519897625
+player,,1992,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-27.086919860663453
+player,,1992,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-27.261354584011784
+player,,1992,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.4187076426091052
+player,,1992,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.495320766883297
+player,,1992,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.18530390912940822
+player,,1992,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.9146312406633286
+player,,1992,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.0694086547802408
+player,,1992,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.4945654025623676
+player,,1992,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.856469819490554
+player,,1992,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.98834161667648
+player,,1992,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,13.078003581086406
+player,,1992,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.464701278629722
+player,,1992,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.711376771058644
+player,,1992,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,18.26987894468582
+player,,1992,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,16.69252793074897
+player,,1992,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,16.593790381776348
+player,,1992,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,20.975823366926804
+player,,1992,p20,B,Striker,default,0,,1,0,0,2,2,100.0,0,0,0,0,0,,,23.33147386100347
+player,,1992,p21,B,Left Winger,default,0,,3,0,0,2,1,50.0,1,0,0,0,0,,,29.8368276808034

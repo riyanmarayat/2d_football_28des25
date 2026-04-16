@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1973,A,A,,default,0,50.9345794392524,,,,0,0,0.0,,,0,,,0,1,-82.41771468480933
+team,,1973,B,B,,default,0,34.579439252336535,,,,1,1,100.0,,,1,,,1,0,71.18638375888604
+player,,1973,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-9.022437419899141
+player,,1973,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,1,0,1,0,0,,,-7.965504806030765
+player,,1973,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-8.445816998271209
+player,,1973,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-8.18942096960981
+player,,1973,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-8.353609275368417
+player,,1973,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.7358383209598145
+player,,1973,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.65635606766301
+player,,1973,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.059808215845393
+player,,1973,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.237783217615071
+player,,1973,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-6.6297288021529255
+player,,1973,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-7.121410591393793
+player,,1973,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.107924732254313
+player,,1973,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.384026691173386
+player,,1973,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.34332680161323
+player,,1973,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.515775839288031
+player,,1973,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.318665186009615
+player,,1973,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.3289267151970146
+player,,1973,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.849706949874707
+player,,1973,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.50108618200232
+player,,1973,p19,B,Right Winger,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,7.861380226281469
+player,,1973,p20,B,Striker,default,0,,0,0,0,1,1,100.0,0,0,0,0,0,,,7.647531599146904
+player,,1973,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.328032836044962

@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1997,A,A,,default,0,30.39999999999931,,,,2,0,0.0,,,0,,,0,0,93.25277220202574
+team,,1997,B,B,,default,0,46.89999999999892,,,,3,2,66.66666666666666,,,0,,,0,0,92.93151273588403
+player,,1997,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.873208883500167
+player,,1997,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.037585156828249
+player,,1997,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.109048984794185
+player,,1997,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.334131337429569
+player,,1997,p4,A,Right Fullback,default,0,,3,0,0,2,0,0.0,29,0,0,15,0,,,16.42542001584441
+player,,1997,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.8743250255978685
+player,,1997,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.927650644898493
+player,,1997,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.812616576419101
+player,,1997,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.147548655402497
+player,,1997,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.808888905402595
+player,,1997,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.902348015908853
+player,,1997,p11,B,Goalkeeper,default,0,,2,0,0,0,0,0.0,1,1,0,0,0,,,16.000428691438973
+player,,1997,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.1521873291625395
+player,,1997,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.590771634911817
+player,,1997,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.068614699634537
+player,,1997,p15,B,Left Fullback,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,9.756371284483068
+player,,1997,p16,B,Central Midfielder,default,0,,1,0,0,1,1,100.0,0,0,0,0,0,,,9.809119438078424
+player,,1997,p17,B,Central Midfielder,default,0,,1,0,0,2,1,50.0,0,0,0,1,0,,,12.420929027434912
+player,,1997,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.085462939261967
+player,,1997,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.831903785602354
+player,,1997,p20,B,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.338480068436967
+player,,1997,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.877243837438319

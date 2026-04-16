@@ -1,7 +1,7 @@
 import math
 
-PLAYER_RADIUS = 1.2          # meter (sesuaikan skala internal)
-PLAYER_MAX_PUSH = 0.6        # seberapa kuat dorongan pemisahan
+PLAYER_RADIUS = 1.0          # meter (lebih kecil agar jarak minimum antar pemain lebih rapat)
+PLAYER_MAX_PUSH = 0.5        # seberapa kuat dorongan pemisahan
 RESTITUTION = 0.15           # pantulan kecil
 FRICTION = 0.90              # redam setelah tumbukan
 

@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,2019,A,A,,default,0,46.69999999999892,,,,0,0,0.0,,,0,,,0,0,99.2476583801925
+team,,2019,B,B,,default,0,38.09999999999913,,,,5,1,20.0,,,0,,,0,0,110.76068105525408
+player,,2019,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,4.835816783206688
+player,,2019,p1,A,Left Fullback,default,0,,2,2,0,0,0,0.0,1,0,0,2,0,,,20.822912067114355
+player,,2019,p2,A,Center Back,default,0,,1,0,0,0,0,0.0,0,0,0,0,0,,,7.309976508320265
+player,,2019,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.818753981333178
+player,,2019,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.0439618795554715
+player,,2019,p5,A,Left Midfielder,default,0,,1,0,1,0,0,0.0,0,0,0,0,0,,,8.750107147380488
+player,,2019,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.754789134179315
+player,,2019,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.749127878534376
+player,,2019,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,7.78186853227235
+player,,2019,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.479920537718087
+player,,2019,p10,A,Striker,default,0,,0,0,0,0,0,0.0,1,0,0,0,0,,,10.900423930578556
+player,,2019,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,5.117764410505577
+player,,2019,p12,B,Right Fullback,default,0,,1,0,0,1,0,0.0,0,1,0,2,0,,,12.460995024768458
+player,,2019,p13,B,Center Back,default,0,,1,0,0,2,0,0.0,0,0,0,0,0,,,14.291920433962812
+player,,2019,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.9688766655899
+player,,2019,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.847817467676184
+player,,2019,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.044515372880271
+player,,2019,p17,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.815442370065254
+player,,2019,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.735546047344245
+player,,2019,p19,B,Right Winger,default,0,,1,0,1,1,0,0.0,1,0,0,0,0,,,12.578034965366218
+player,,2019,p20,B,Striker,default,0,,1,0,0,1,1,100.0,0,0,0,0,0,,,12.665584446392826
+player,,2019,p21,B,Left Winger,default,0,,2,0,0,0,0,0.0,0,0,0,0,0,,,13.234183850701488

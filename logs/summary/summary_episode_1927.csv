@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1927,A,A,,default,0,9.034267912772608,,,,0,0,0.0,,,0,,,0,0,-16.985295445599835
+team,,1927,B,B,,default,0,86.60436137071652,,,,3,0,0.0,,,0,,,0,0,127.53121542429878
+player,,1927,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.7536308241377445
+player,,1927,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.7651345159362135
+player,,1927,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.687083381737554
+player,,1927,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.7219080238103897
+player,,1927,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-2.761267130054985
+player,,1927,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.6414449048505199
+player,,1927,p6,A,Central Midfielder,default,0,,1,0,1,0,0,0.0,0,0,0,0,0,,,0.9375775620842015
+player,,1927,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.2495533282387798
+player,,1927,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.6677403823480551
+player,,1927,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.6463323505748552
+player,,1927,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.0287781659949409
+player,,1927,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,6.551270048368732
+player,,1927,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.659359974174127
+player,,1927,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.91325686063173
+player,,1927,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,9.025698704301425
+player,,1927,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.417020765777519
+player,,1927,p16,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.281020497877506
+player,,1927,p17,B,Central Midfielder,default,0,,0,0,0,1,0,0.0,2,0,0,0,0,,,18.63564492333892
+player,,1927,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,11.49048811219397
+player,,1927,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,13.926731089920873
+player,,1927,p20,B,Striker,default,0,,3,0,0,2,0,0.0,1,0,0,0,0,,,16.431551918859043
+player,,1927,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,14.199172528855199

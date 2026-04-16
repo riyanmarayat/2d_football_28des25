@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1988,A,A,,default,0,17.798594847774787,,,,4,0,0.0,,,0,,,0,0,-192.52987687096538
+team,,1988,B,B,,default,0,77.86885245901574,,,,19,17,89.47368421052632,,,0,,,0,0,257.27036586100564
+player,,1988,p0,A,Goalkeeper,default,0,,3,1,0,4,0,0.0,1,1,0,0,0,,,51.65033322918893
+player,,1988,p1,A,Left Fullback,default,0,,0,0,1,0,0,0.0,0,0,0,0,0,,,-54.17758569205411
+player,,1988,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-57.12089367184098
+player,,1988,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-56.62601057553188
+player,,1988,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-55.48553322159925
+player,,1988,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.8575842812200904
+player,,1988,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.927217676198553
+player,,1988,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.272039516174481
+player,,1988,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.3654140906362575
+player,,1988,p9,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.2275140485987053
+player,,1988,p10,A,Striker,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-3.120417326299803
+player,,1988,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,13.322658423008718
+player,,1988,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,16.87714689059414
+player,,1988,p13,B,Center Back,default,0,,2,0,0,7,6,85.71428571428571,1,0,0,0,0,,,23.42179686056237
+player,,1988,p14,B,Center Back,default,0,,2,0,0,1,0,0.0,0,0,0,0,0,,,20.085609409807407
+player,,1988,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,17.32885323314655
+player,,1988,p16,B,Central Midfielder,default,0,,1,1,0,1,1,100.0,1,0,0,0,0,,,25.8814465579804
+player,,1988,p17,B,Central Midfielder,default,0,,2,1,0,1,1,100.0,0,2,0,0,0,,,25.314464105844216
+player,,1988,p18,B,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,21.497790133599196
+player,,1988,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,27.96154540516551
+player,,1988,p20,B,Striker,default,0,,0,0,0,4,4,100.0,0,0,0,0,0,,,30.4309025840335
+player,,1988,p21,B,Left Winger,default,0,,1,1,0,5,5,100.0,0,0,0,0,0,,,35.14815225726257

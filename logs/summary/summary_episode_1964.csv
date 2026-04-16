@@ -1,0 +1,25 @@
+category,window,episode,entity,team,role,scenario,scenario_variant,possession_pct,dribbles,tackles,blocks,passes,passes_completed,pass_accuracy,shots_on,shots_off,goals,clears,saves,goals_for,goals_against,reward_episode
+team,,1964,A,A,,default,0,4.825291181364355,,,,2,0,0.0,,,0,,,0,0,-8.20109240499628
+team,,1964,B,B,,default,0,73.87687188019889,,,,11,2,18.181818181818183,,,0,,,0,0,162.67701858546206
+player,,1964,p0,A,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.8576906682330433
+player,,1964,p1,A,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.7415565282435796
+player,,1964,p2,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.0550428680019859
+player,,1964,p3,A,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-1.0427950239831605
+player,,1964,p4,A,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.8598521097244424
+player,,1964,p5,A,Left Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.8794447050330527
+player,,1964,p6,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.740897877952064
+player,,1964,p7,A,Central Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.9712118634049749
+player,,1964,p8,A,Right Midfielder,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,-0.42666812622939637
+player,,1964,p9,A,Striker,default,0,,1,1,0,1,0,0.0,0,0,0,0,0,,,-0.18304671546064583
+player,,1964,p10,A,Striker,default,0,,1,0,1,1,0,0.0,0,0,0,0,0,,,-0.4428859187299429
+player,,1964,p11,B,Goalkeeper,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,8.455625538148489
+player,,1964,p12,B,Right Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.800462934806427
+player,,1964,p13,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,12.058028103034202
+player,,1964,p14,B,Center Back,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.990700525844389
+player,,1964,p15,B,Left Fullback,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,10.979349445825221
+player,,1964,p16,B,Central Midfielder,default,0,,0,0,0,1,0,0.0,0,0,0,0,0,,,13.307284987314544
+player,,1964,p17,B,Central Midfielder,default,0,,0,1,0,2,2,100.0,0,0,0,0,0,,,15.385523050081195
+player,,1964,p18,B,Central Midfielder,default,0,,2,1,0,8,0,0.0,2,0,0,1,0,,,26.704804614040018
+player,,1964,p19,B,Right Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,17.2816737140407
+player,,1964,p20,B,Striker,default,0,,1,0,0,0,0,0.0,1,0,0,0,0,,,19.404789689618838
+player,,1964,p21,B,Left Winger,default,0,,0,0,0,0,0,0.0,0,0,0,0,0,,,17.308775982707953

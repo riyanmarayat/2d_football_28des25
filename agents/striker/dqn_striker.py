@@ -88,16 +88,16 @@ class DQNStriker:
         state_dim: int = 70,  # fitur dasar + role one-hot (10)
         n_actions: int = ACTION_COUNT,
         gamma: float = 0.99,
-        lr: float = 1e-3,
-        batch_size: int = 64,
-        buffer_size: int = 100_000,
-        min_buffer_to_learn: int = 1000,
-        target_update_interval: int = 500,
-        target_update_tau: float = 0.01,
+        lr: float = 3e-4,
+        batch_size: int = 32,
+        buffer_size: int = 200_000,
+        min_buffer_to_learn: int = 500,
+        target_update_interval: int = 0,     # gunakan tau
+        target_update_tau: float = 0.02,
         epsilon_start: float = 1.0,
-        epsilon_end: float = 0.02,
-        epsilon_decay_steps: int = 20_000,
-        epsilon_warmup_steps: int = 2_000,
+        epsilon_end: float = 0.05,
+        epsilon_decay_steps: int = 30_000,
+        epsilon_warmup_steps: int = 1_000,
         epsilon_decay_type: str = "cosine",  # "linear" atau "cosine"
         max_move_speed: float = 6.0,
         sprint_multiplier: float = 1.2,
@@ -267,6 +267,13 @@ class DQNStriker:
         self._update_target_network()
 
         self.last_state = next_state_vec
+        # simpan info debug ringkas untuk pemanggil (opsional)
+        self._last_train_info = {
+            "loss": float(loss.item()),
+            "buffer": len(self.buffer),
+            "epsilon": float(self.epsilon),
+            "train_steps": int(self.train_steps),
+        }
 
     def extract_features(self, snapshot: Dict[str, Any]) -> np.ndarray:
         field_info = snapshot.get("field", {})
@@ -545,9 +552,10 @@ class DQNStriker:
 
         role = self.role_name
         is_gk = "goalkeeper" in role
+        is_wingback = ("right midfielder" in role) or ("left midfielder" in role) or ("wingback" in role)
+        is_wing = any(k in role for k in ["winger"]) or is_wingback
         is_def = any(k in role for k in ["back", "fullback"])
-        is_mid = any(k in role for k in ["midfielder"])
-        is_wing = any(k in role for k in ["winger"])
+        is_mid = ("midfielder" in role) and not is_def and not is_wing
         is_striker = "striker" in role and not is_wing
 
         # Movement set
